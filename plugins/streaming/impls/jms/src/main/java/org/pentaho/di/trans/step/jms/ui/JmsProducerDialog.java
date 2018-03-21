@@ -43,32 +43,35 @@ import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.di.core.plugins.StepPluginType;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.step.jms.JmsDelegate;
+import org.pentaho.di.trans.step.jms.JmsProducerMeta;
 import org.pentaho.di.ui.core.ConstUI;
 import org.pentaho.di.ui.core.gui.GUIResource;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 
 public class JmsProducerDialog extends BaseStepDialog implements StepDialogInterface {
+  private static final int SHELL_MIN_WIDTH = 527;
+  private static final int SHELL_MIN_HEIGHT = 622;
+
   private static Class<?> PKG = JmsProducerDialog.class;
 
   private final ModifyListener lsMod;
-  private final Shell parent;
   private final JmsDelegate jmsDelegate;
-  private final StepMetaInterface meta;
+  private final JmsProducerMeta meta;
   private CTabFolder wTabFolder;
   private CTabItem wSetupTab;
   private Composite wSetupComp;
 
-  public JmsProducerDialog( Shell parent, StepMetaInterface meta, JmsDelegate jmsDelegate,
+  public JmsProducerDialog( Shell parent, Object meta,
                             TransMeta transMeta, String stepname ) {
-    super( parent, meta, transMeta, stepname );
-    lsMod = e -> meta.setChanged();
-    this.meta = meta;
-    this.parent = parent;
-    this.jmsDelegate = jmsDelegate;
+    super( parent, (BaseStepMeta) meta, transMeta, stepname );
+    lsMod = e -> ((StepMetaInterface)meta).setChanged();
+    this.meta = (JmsProducerMeta) meta;
+    this.jmsDelegate = this.meta.jmsDelegate;
   }
 
   @Override public String open() {
@@ -78,7 +81,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     shell = new Shell( parent, SWT.DIALOG_TRIM | SWT.MIN | SWT.MAX | SWT.RESIZE );
     props.setLook( shell );
     setShellImage( shell, meta );
-    shell.setMinimumSize( 527, 622 );
+    shell.setMinimumSize( SHELL_MIN_WIDTH, SHELL_MIN_HEIGHT );
 
     changed = meta.hasChanged();
 
@@ -174,7 +177,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
 
     ConnectionForm connectionForm = new ConnectionForm( wSetupComp, props, transMeta, lsMod, jmsDelegate );
     Group group = connectionForm.layoutForm();
-    DestinationForm destinationForm = new DestinationForm( parent, group, props, transMeta, lsMod, "", "" );
+    DestinationForm destinationForm = new DestinationForm( wSetupComp, group, props, transMeta, lsMod, "", "" );
     destinationForm.layoutForm();
 
     FormData fdSetupComp = new FormData();
@@ -185,6 +188,10 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     wSetupComp.setLayoutData( fdSetupComp );
     wSetupComp.layout();
     wSetupTab.setControl( wSetupComp );
+
+    wTabFolder.setSelection( 0 );
+
+    shell.open();
 
     return "";
   }
