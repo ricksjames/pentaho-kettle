@@ -38,7 +38,6 @@ import javax.jms.JMSProducer;
 public class JmsProducer extends BaseStep implements StepInterface {
 
   private JmsProducerMeta meta;
-  private JMSContext context;
   private JMSProducer producer;
   private Destination destination;
   private int messageIndex;
@@ -74,15 +73,12 @@ public class JmsProducer extends BaseStep implements StepInterface {
 
     if ( null == row ) {
       setOutputDone();
-      // todo any other cleanup
-
       return false;  // indicates done
     }
 
     if ( first ) {
-      // init connections or whatever
-      context = meta.jmsDelegate.getJmsContext( this );
-      producer = context.createProducer();
+      // init connections
+      producer = meta.jmsDelegate.getJmsContext( this ).createProducer();
       destination = meta.jmsDelegate.getDestination( this );
       messageIndex = getInputRowMeta().indexOfValue( environmentSubstitute( meta.jmsDelegate.messageField ) );
       first = false;
