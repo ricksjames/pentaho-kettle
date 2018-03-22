@@ -50,14 +50,16 @@ import org.pentaho.di.trans.step.jms.JmsDelegate;
 import org.pentaho.di.trans.step.jms.JmsProducerMeta;
 import org.pentaho.di.ui.core.ConstUI;
 import org.pentaho.di.ui.core.gui.GUIResource;
+import org.pentaho.di.ui.core.widget.ComboVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
+
+import static org.pentaho.di.i18n.BaseMessages.getString;
+import static org.pentaho.di.trans.step.jms.JmsConstants.PKG;
 
 
 public class JmsProducerDialog extends BaseStepDialog implements StepDialogInterface {
-  private static final int SHELL_MIN_WIDTH = 527;
-  private static final int SHELL_MIN_HEIGHT = 622;
-
-  private static Class<?> PKG = JmsProducerDialog.class;
+  private static final int SHELL_MIN_WIDTH = 532;
+  private static final int SHELL_MIN_HEIGHT = 559;
 
   private ModifyListener lsMod;
   private final JmsDelegate jmsDelegate;
@@ -67,6 +69,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
   private Composite wSetupComp;
   private ConnectionForm connectionForm;
   private DestinationForm destinationForm;
+  private ComboVar messageField;
 
   public JmsProducerDialog( Shell parent, Object meta,
                             TransMeta transMeta, String stepname ) {
@@ -94,7 +97,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     formLayout.marginHeight = 15;
 
     shell.setLayout( formLayout );
-    shell.setText( BaseMessages.getString( PKG, "" ) );
+    shell.setText( BaseMessages.getString( PKG, "JmsProducerDialog.Shell.Title" ) );
 
     Label wicon = new Label( shell, SWT.RIGHT );
     wicon.setImage( getImage() );
@@ -105,7 +108,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     props.setLook( wicon );
 
     wlStepname = new Label( shell, SWT.RIGHT );
-    wlStepname.setText( BaseMessages.getString( PKG, "JmsProducer.Stepname.Label" ) );
+    wlStepname.setText( BaseMessages.getString( PKG, "JmsProducerDialog.Stepname.Label" ) );
     props.setLook( wlStepname );
     fdlStepname = new FormData();
     fdlStepname.left = new FormAttachment( 0, 0 );
@@ -170,7 +173,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
 
     //Setup Tab
     wSetupTab = new CTabItem( wTabFolder, SWT.NONE );
-    wSetupTab.setText( BaseMessages.getString( PKG, "BaseStreamingDialog.SetupTab" ) );
+    wSetupTab.setText( BaseMessages.getString( PKG, "JmsProducerDialog.SetupTab" ) );
 
     wSetupComp = new Composite( wTabFolder, SWT.NONE );
     props.setLook( wSetupComp );
@@ -183,7 +186,27 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     Group group = connectionForm.layoutForm();
     destinationForm = new DestinationForm(
       wSetupComp, group, props, transMeta, lsMod, jmsDelegate.destinationType, jmsDelegate.destinationName );
-    destinationForm.layoutForm();
+    Composite destinationFormComposite =  destinationForm.layoutForm();
+
+    Label lbMessageField = new Label( wSetupComp, SWT.LEFT );
+    props.setLook( lbMessageField );
+    lbMessageField.setText( getString( PKG, "JmsProducerDialog.MessageField" ) );
+    FormData fdMessage = new FormData();
+    fdMessage.left = new FormAttachment( 0, 0 );
+    fdMessage.top = new FormAttachment( destinationFormComposite, 15 );
+    fdMessage.width = 140;
+    lbMessageField.setLayoutData( fdMessage );
+
+    messageField = new ComboVar( transMeta, wSetupComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( messageField );
+    messageField.addModifyListener( lsMod );
+    FormData fdMessageField = new FormData();
+    fdMessageField.left = new FormAttachment( 0, 0 );
+    fdMessageField.top = new FormAttachment( lbMessageField, 5 );
+    fdMessageField.width = 250;
+    messageField.setLayoutData( fdMessageField );
+
+    messageField.addModifyListener( lsMod );
 
     FormData fdSetupComp = new FormData();
     fdSetupComp.left = new FormAttachment( 0, 0 );
@@ -198,6 +221,8 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
 
     wOK.addListener( SWT.Selection, lsOK );
     wCancel.addListener( SWT.Selection, lsCancel );
+
+    setSize();
 
     meta.setChanged( changed );
     shell.open();
@@ -218,8 +243,15 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     jmsDelegate.password = connectionForm.getPassword();
     jmsDelegate.destinationType = destinationForm.getDestinationType();
     jmsDelegate.destinationName = destinationForm.getDestinationName();
-//    jmsDelegate.messageField = fieldsTab.getFieldNames()[ 0 ];
+    jmsDelegate.messageField = messageField.getText();
     dispose();
+  }
+
+  @Override
+  public void setSize() {
+    setSize( shell );  // sets shell location and preferred size
+    shell.setMinimumSize( SHELL_MIN_WIDTH, SHELL_MIN_HEIGHT  );
+    shell.setSize(  SHELL_MIN_WIDTH, SHELL_MIN_HEIGHT   ); // force initial size
   }
 
   private void cancel() {
