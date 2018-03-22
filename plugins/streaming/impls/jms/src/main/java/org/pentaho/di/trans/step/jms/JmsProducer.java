@@ -22,8 +22,7 @@
 
 package org.pentaho.di.trans.step.jms;
 
-import org.pentaho.di.core.row.RowMeta;
-import org.pentaho.di.core.row.value.ValueMetaString;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -31,19 +30,65 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
-import org.pentaho.di.trans.streaming.common.BaseStreamStep;
-import org.pentaho.di.trans.streaming.common.FixedTimeStreamWindow;
 
-import static java.util.Objects.requireNonNull;
-import static org.pentaho.di.i18n.BaseMessages.getString;
-import static org.pentaho.di.trans.step.jms.JmsConstants.PKG;
+import javax.jms.Destination;
+import javax.jms.JMSContext;
+import javax.jms.JMSProducer;
 
-//TODO: this class needs implemented
 public class JmsProducer extends BaseStep implements StepInterface {
+
+  private JmsProducerMeta meta;
+  private JMSProducer producer;
+  private Destination destination;
+  private int messageIndex;
 
   public JmsProducer( StepMeta stepMeta,
                       StepDataInterface stepDataInterface, int copyNr,
                       TransMeta transMeta, Trans trans ) {
     super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
+  }
+
+  @Override
+  public boolean init( StepMetaInterface stepMetaInterface, StepDataInterface stepDataInterface ) {
+    boolean isInitalized = super.init( stepMetaInterface, stepDataInterface );
+    meta = ( (JmsProducerMeta) stepMetaInterface );
+
+    // TODO FOR TEST PURPOSES, hardcoding meta values
+    meta.jmsDelegate.url = "mq://10.177.178.135:1414/QM1?channel=DEV.APP.SVRCONN";
+    meta.jmsDelegate.username = "devuser";
+    meta.jmsDelegate.password = "password";
+    meta.jmsDelegate.connectionType = "WEBSPHERE";
+    meta.jmsDelegate.destinationType = "QUEUE";
+    meta.jmsDelegate.destinationName = "DEV.QUEUE.3";
+    meta.jmsDelegate.messageField = "message";
+    // <<< TODO
+
+    return isInitalized;
+  }
+
+  @Override
+  public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
+    meta = ( (JmsProducerMeta) smi );
+    Object[] row = getRow();
+
+    if ( null == row ) {
+      setOutputDone();
+      return false;  // indicates done
+    }
+
+    if ( first ) {
+      // init connections
+      producer = meta.jmsDelegate.getJmsContext( this ).createProducer();
+      destination = meta.jmsDelegate.getDestination( this );
+      messageIndex = getInputRowMeta().indexOfValue( environmentSubstitute( meta.jmsDelegate.messageField ) );
+      first = false;
+    }
+
+    // send row to JMS
+    producer.send( destination, row[ messageIndex ].toString() );
+
+    // send to next steps
+    putRow( getInputRowMeta(), row );
+    return true;
   }
 }

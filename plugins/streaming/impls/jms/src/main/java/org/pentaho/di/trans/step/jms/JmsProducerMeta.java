@@ -25,31 +25,21 @@ package org.pentaho.di.trans.step.jms;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.injection.InjectionDeep;
 import org.pentaho.di.core.injection.InjectionSupported;
-import org.pentaho.di.core.row.RowMeta;
-import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.core.util.GenericStepData;
-import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.util.serialization.BaseSerializingMeta;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
-import org.pentaho.di.trans.streaming.common.BaseStreamStepMeta;
-
-import static org.pentaho.di.core.ObjectLocationSpecificationMethod.FILENAME;
-//TODO: this class needs implemented
 @InjectionSupported ( localizationPrefix = "JmsProducerMeta.Injection." )
-//TODO: change image to JMSP.svg - don't know where to find this
-@Step ( id = "JmsProducer2", image = "JMSC.svg", name = "JMS Producer2.0",
+@Step ( id = "Jms2Producer", image = "JMSP.svg", name = "JMS Producer",
   description = "JmsProducerDialog.TypeLongDesc", categoryDescription = "Streaming" )
-public class JmsProducerMeta extends BaseStepMeta implements StepMetaInterface, Cloneable {
+public class JmsProducerMeta extends BaseSerializingMeta implements StepMetaInterface, Cloneable {
 
   @InjectionDeep
   public final JmsDelegate jmsDelegate;
-
-
 
   public JmsProducerMeta( JmsDelegate jmsDelegate ) {
     this.jmsDelegate = jmsDelegate;

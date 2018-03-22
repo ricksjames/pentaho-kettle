@@ -59,19 +59,23 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
 
   private static Class<?> PKG = JmsProducerDialog.class;
 
-  private final ModifyListener lsMod;
+  private ModifyListener lsMod;
   private final JmsDelegate jmsDelegate;
   private final JmsProducerMeta meta;
   private CTabFolder wTabFolder;
   private CTabItem wSetupTab;
   private Composite wSetupComp;
+  private ConnectionForm connectionForm;
+  private DestinationForm destinationForm;
 
   public JmsProducerDialog( Shell parent, Object meta,
                             TransMeta transMeta, String stepname ) {
     super( parent, (BaseStepMeta) meta, transMeta, stepname );
-    lsMod = e -> ((StepMetaInterface)meta).setChanged();
     this.meta = (JmsProducerMeta) meta;
     this.jmsDelegate = this.meta.jmsDelegate;
+    lsMod = e -> this.meta.setChanged();
+    lsOK = e -> ok();
+    lsCancel = e -> cancel();
   }
 
   @Override public String open() {
@@ -175,9 +179,10 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     setupLayout.marginWidth = 15;
     wSetupComp.setLayout( setupLayout );
 
-    ConnectionForm connectionForm = new ConnectionForm( wSetupComp, props, transMeta, lsMod, jmsDelegate );
+    connectionForm = new ConnectionForm( wSetupComp, props, transMeta, lsMod, jmsDelegate );
     Group group = connectionForm.layoutForm();
-    DestinationForm destinationForm = new DestinationForm( wSetupComp, group, props, transMeta, lsMod, "", "" );
+    destinationForm = new DestinationForm(
+      wSetupComp, group, props, transMeta, lsMod, jmsDelegate.destinationType, jmsDelegate.destinationName );
     destinationForm.layoutForm();
 
     FormData fdSetupComp = new FormData();
@@ -191,9 +196,35 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
 
     wTabFolder.setSelection( 0 );
 
+    wOK.addListener( SWT.Selection, lsOK );
+    wCancel.addListener( SWT.Selection, lsCancel );
+
+    meta.setChanged( changed );
     shell.open();
 
+    while ( !shell.isDisposed() ) {
+      if ( !display.readAndDispatch() ) {
+        display.sleep();
+      }
+    }
+
     return "";
+  }
+
+  private void ok() {
+    stepname = wStepname.getText();
+    jmsDelegate.url = connectionForm.getUrl();
+    jmsDelegate.username = connectionForm.getUser();
+    jmsDelegate.password = connectionForm.getPassword();
+    jmsDelegate.destinationType = destinationForm.getDestinationType();
+    jmsDelegate.destinationName = destinationForm.getDestinationName();
+//    jmsDelegate.messageField = fieldsTab.getFieldNames()[ 0 ];
+    dispose();
+  }
+
+  private void cancel() {
+    meta.setChanged( false );
+    dispose();
   }
 
   private Image getImage() {
