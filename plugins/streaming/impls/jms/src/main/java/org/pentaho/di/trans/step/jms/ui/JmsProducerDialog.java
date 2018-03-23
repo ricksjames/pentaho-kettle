@@ -35,12 +35,16 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Props;
+import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.di.core.plugins.StepPluginType;
+import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaBase;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
@@ -52,6 +56,8 @@ import org.pentaho.di.ui.core.ConstUI;
 import org.pentaho.di.ui.core.gui.GUIResource;
 import org.pentaho.di.ui.core.widget.ComboVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
+
+import java.util.List;
 
 import static org.pentaho.di.i18n.BaseMessages.getString;
 import static org.pentaho.di.trans.step.jms.JmsConstants.PKG;
@@ -69,7 +75,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
   private Composite wSetupComp;
   private ConnectionForm connectionForm;
   private DestinationForm destinationForm;
-  private ComboVar messageField;
+  private ComboVar wMessageField;
 
   public JmsProducerDialog( Shell parent, Object meta,
                             TransMeta transMeta, String stepname ) {
@@ -194,19 +200,34 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     FormData fdMessage = new FormData();
     fdMessage.left = new FormAttachment( 0, 0 );
     fdMessage.top = new FormAttachment( destinationFormComposite, 15 );
-    fdMessage.width = 140;
+    fdMessage.width = 250;
     lbMessageField.setLayoutData( fdMessage );
 
-    messageField = new ComboVar( transMeta, wSetupComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook( messageField );
-    messageField.addModifyListener( lsMod );
+    wMessageField = new ComboVar( transMeta, wSetupComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wMessageField );
+    wMessageField.addModifyListener( lsMod );
     FormData fdMessageField = new FormData();
     fdMessageField.left = new FormAttachment( 0, 0 );
     fdMessageField.top = new FormAttachment( lbMessageField, 5 );
     fdMessageField.width = 250;
-    messageField.setLayoutData( fdMessageField );
+    wMessageField.setLayoutData( fdMessageField );
 
-    messageField.addModifyListener( lsMod );
+    Listener lsMessageFocus = e -> {
+      String current = wMessageField.getText();
+      wMessageField.getCComboWidget().removeAll();
+      wMessageField.setText( current );
+      try {
+        RowMetaInterface rmi = transMeta.getPrevStepFields( meta.getParentStepMeta().getName() );
+        List ls = rmi.getValueMetaList();
+        for ( Object l : ls ) {
+          ValueMetaBase vmb = (ValueMetaBase) l;
+          wMessageField.add( vmb.getName() );
+        }
+      } catch ( KettleStepException ex ) {
+        // do nothing
+      }
+    };
+    wMessageField.getCComboWidget().addListener( SWT.FocusIn, lsMessageFocus );
 
     FormData fdSetupComp = new FormData();
     fdSetupComp.left = new FormAttachment( 0, 0 );
@@ -243,7 +264,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     jmsDelegate.password = connectionForm.getPassword();
     jmsDelegate.destinationType = destinationForm.getDestinationType();
     jmsDelegate.destinationName = destinationForm.getDestinationName();
-    jmsDelegate.messageField = messageField.getText();
+    jmsDelegate.messageField = wMessageField.getText();
     dispose();
   }
 
