@@ -23,6 +23,7 @@
 package org.pentaho.di.trans.step.jms;
 
 import org.pentaho.di.core.annotations.Step;
+import org.pentaho.di.core.injection.Injection;
 import org.pentaho.di.core.injection.InjectionDeep;
 import org.pentaho.di.core.injection.InjectionSupported;
 import org.pentaho.di.core.util.GenericStepData;
@@ -38,8 +39,13 @@ import org.pentaho.di.trans.step.StepMetaInterface;
   description = "JmsProducerDialog.TypeLongDesc", categoryDescription = "Streaming" )
 public class JmsProducerMeta extends BaseSerializingMeta implements StepMetaInterface, Cloneable {
 
+  static final String FIELD_TO_SEND = "FIELD_TO_SEND";
+
   @InjectionDeep
   public final JmsDelegate jmsDelegate;
+
+  @Injection( name = FIELD_TO_SEND )
+  private String fieldToSend = "";
 
   public JmsProducerMeta( JmsDelegate jmsDelegate ) {
     this.jmsDelegate = jmsDelegate;
@@ -62,5 +68,13 @@ public class JmsProducerMeta extends BaseSerializingMeta implements StepMetaInte
 
   @Override public StepDataInterface getStepData() {
     return new GenericStepData();
+  }
+
+  public String getFieldToSend() {
+    return fieldToSend;
+  }
+
+  public void setFieldToSend( String fieldToSend ) {
+    this.fieldToSend = fieldToSend;
   }
 }

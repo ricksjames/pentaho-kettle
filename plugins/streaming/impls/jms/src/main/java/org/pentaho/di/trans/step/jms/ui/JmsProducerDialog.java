@@ -59,6 +59,7 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 import java.util.List;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static org.pentaho.di.i18n.BaseMessages.getString;
 import static org.pentaho.di.trans.step.jms.JmsConstants.PKG;
 
@@ -243,6 +244,9 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
     wOK.addListener( SWT.Selection, lsOK );
     wCancel.addListener( SWT.Selection, lsCancel );
 
+    //get data for message field, other fields data is loaded by the forms
+    wMessageField.setText( nullToEmpty( meta.getFieldToSend() ) );
+
     setSize();
 
     meta.setChanged( changed );
@@ -259,12 +263,14 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
 
   private void ok() {
     stepname = wStepname.getText();
+    //TODO: uncomment the following line once the connection type is implemented in the connection form
+    //jmsDelegate.connectionType = connectionForm.getConnection();
     jmsDelegate.url = connectionForm.getUrl();
     jmsDelegate.username = connectionForm.getUser();
     jmsDelegate.password = connectionForm.getPassword();
     jmsDelegate.destinationType = destinationForm.getDestinationType();
     jmsDelegate.destinationName = destinationForm.getDestinationName();
-    jmsDelegate.messageField = wMessageField.getText();
+    meta.setFieldToSend( wMessageField.getText() );
     dispose();
   }
 
