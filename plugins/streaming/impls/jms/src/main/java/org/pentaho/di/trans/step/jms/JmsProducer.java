@@ -32,7 +32,6 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 
 import javax.jms.Destination;
-import javax.jms.JMSContext;
 import javax.jms.JMSProducer;
 
 public class JmsProducer extends BaseStep implements StepInterface {

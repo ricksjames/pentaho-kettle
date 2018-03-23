@@ -49,7 +49,6 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
-import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.step.jms.JmsDelegate;
 import org.pentaho.di.trans.step.jms.JmsProducerMeta;
 import org.pentaho.di.ui.core.ConstUI;
@@ -65,8 +64,8 @@ import static org.pentaho.di.trans.step.jms.JmsConstants.PKG;
 
 
 public class JmsProducerDialog extends BaseStepDialog implements StepDialogInterface {
-  private static final int SHELL_MIN_WIDTH = 532;
-  private static final int SHELL_MIN_HEIGHT = 559;
+  private static final int SHELL_MIN_WIDTH = 528;
+  private static final int SHELL_MIN_HEIGHT = 565;
 
   private ModifyListener lsMod;
   private final JmsDelegate jmsDelegate;
