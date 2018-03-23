@@ -53,16 +53,6 @@ public class JmsProducer extends BaseStep implements StepInterface {
     boolean isInitalized = super.init( stepMetaInterface, stepDataInterface );
     meta = ( (JmsProducerMeta) stepMetaInterface );
 
-    // TODO FOR TEST PURPOSES, hardcoding meta values
-    meta.jmsDelegate.url = "mq://10.177.178.135:1414/QM1?channel=DEV.APP.SVRCONN";
-    meta.jmsDelegate.username = "devuser";
-    meta.jmsDelegate.password = "password";
-    meta.jmsDelegate.connectionType = "WEBSPHERE";
-    meta.jmsDelegate.destinationType = "QUEUE";
-    meta.jmsDelegate.destinationName = "DEV.QUEUE.3";
-    meta.jmsDelegate.messageField = "message";
-    // <<< TODO
-
     return isInitalized;
   }
 
