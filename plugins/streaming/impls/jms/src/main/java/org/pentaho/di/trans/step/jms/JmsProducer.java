@@ -69,7 +69,7 @@ public class JmsProducer extends BaseStep implements StepInterface {
       // init connections
       producer = meta.jmsDelegate.getJmsContext( this ).createProducer();
       destination = meta.jmsDelegate.getDestination( this );
-      messageIndex = getInputRowMeta().indexOfValue( environmentSubstitute( meta.jmsDelegate.messageField ) );
+      messageIndex = getInputRowMeta().indexOfValue( environmentSubstitute( meta.getFieldToSend() ) );
       first = false;
     }
 
