@@ -233,7 +233,7 @@ public class JmsProducerDialog extends BaseStepDialog implements StepDialogInter
       }
     }
 
-    return "";
+    return stepname;
   }
 
   private void ok() {
