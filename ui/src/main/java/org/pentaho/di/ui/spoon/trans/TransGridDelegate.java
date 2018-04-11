@@ -45,6 +45,8 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.ToolBar;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.i18n.GlobalMessages;
 import org.pentaho.di.trans.step.BaseStepData.StepExecutionStatus;
@@ -153,11 +155,18 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
 
     toolbarControl.setParent( transGridComposite );
 
+    //ignore whitespace for stepname column valueMeta, causing sorting to ignore whitespace
+    String stepNameColumnName = BaseMessages.getString( PKG, "TransLog.Column.Stepname" );
+    ValueMetaInterface valueMeta = new ValueMetaString( stepNameColumnName );
+    valueMeta.setIgnoreWhitespace( true );
+    ColumnInfo stepNameColumnInfo =
+      new ColumnInfo( stepNameColumnName, ColumnInfo.COLUMN_TYPE_TEXT, false,
+        true );
+    stepNameColumnInfo.setValueMeta( valueMeta );
+
     ColumnInfo[] colinf =
       new ColumnInfo[] {
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "TransLog.Column.Stepname" ), ColumnInfo.COLUMN_TYPE_TEXT, false,
-          true ),
+        stepNameColumnInfo,
         new ColumnInfo(
           BaseMessages.getString( PKG, "TransLog.Column.Copynr" ), ColumnInfo.COLUMN_TYPE_TEXT, false, true ),
         new ColumnInfo(
@@ -434,6 +443,10 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
           }
         }
       }
+      // Only need to re-sort if the output has been sorted differently to the default
+      if ( table.getItemCount() > 0 && ( sortColumn != 0 || sortDescending ) ) {
+        transGridView.sortTable( transGridView.getSortField(), sortDescending );
+      }
 
       for ( int i = 0; i < table.getItems().length; i++ ) {
         TableItem item = table.getItem( i );
@@ -444,12 +457,6 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
               ? GUIResource.getInstance().getColorWhite()
               : GUIResource.getInstance().getColorBlueCustomGrid() );
         }
-      }
-
-      // Only need to resort if the output has been sorted differently to the
-      // default
-      if ( table.getItemCount() > 0 && ( sortColumn != 0 || !sortDescending ) ) {
-        transGridView.sortTable( sortColumn, sortDescending, false );
       }
 
       // if (updateRowNumbers) { transGridView.setRowNums(); }

@@ -153,13 +153,9 @@ public class TableView extends Composite {
   private Listener lsFocusInTabItem;
 
   private int sortfield;
-  private int sortfieldLast;
   private boolean sortingDescending;
-  private Boolean sortingDescendingLast;
   private boolean sortable;
-  private int lastRowCount;
   private boolean fieldChanged;
-  private boolean insertImage;
 
   private Menu mRow;
 
@@ -245,9 +241,8 @@ public class TableView extends Composite {
     this.lsFocusInTabItem = lsnr;
 
     sortfield = 0;
-    sortfieldLast = -1;
     sortingDescending = false;
-    sortingDescendingLast = null;
+
 
     sortable = true;
 
@@ -1316,37 +1311,6 @@ public class TableView extends Composite {
   }
 
   public void sortTable( int sortField, boolean sortingDescending ) {
-    sortTable( sortField, sortingDescending, true );
-  }
-  public void sortTable( int sortField, boolean sortingDescending, boolean resetRowNums ) {
-    boolean shouldRefresh = false;
-    if ( this.sortfieldLast == -1 && this.sortingDescendingLast == null ) {
-      // first time through, so update
-      shouldRefresh = true;
-      this.sortfieldLast = this.sortfield;
-      this.sortingDescendingLast = new Boolean( this.sortingDescending );
-
-      this.sortfield = sortField;
-      this.sortingDescending = sortingDescending;
-    }
-
-    if ( sortfieldLast != this.sortfield ) {
-      this.sortfieldLast = this.sortfield;
-      this.sortfield = sortField;
-      shouldRefresh = true;
-
-    }
-
-    if ( sortingDescendingLast != this.sortingDescending ) {
-      this.sortingDescendingLast = this.sortingDescending;
-      this.sortingDescending = sortingDescending;
-      shouldRefresh = true;
-    }
-
-    if ( !shouldRefresh && table.getItemCount() == lastRowCount ) {
-      return;
-    }
-
     removeEmptyRows();
 
     try {
@@ -1481,10 +1445,6 @@ public class TableView extends Composite {
       table.setSortColumn( table.getColumn( sortfield ) );
       table.setSortDirection( sortingDescending ? SWT.DOWN : SWT.UP );
 
-      lastRowCount = table.getItemCount();
-      if ( resetRowNums ) {
-        setRowNums();
-      }
     } catch ( Exception e ) {
       new ErrorDialog( this.getShell(), BaseMessages.getString( PKG, "TableView.ErrorDialog.title" ), BaseMessages
         .getString( PKG, "TableView.ErrorDialog.description" ), e );
