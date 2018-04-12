@@ -23,7 +23,7 @@
 package org.pentaho.di.ui.spoon.trans;
 
 import java.util.ArrayList;
-import java.util.Collection;
+//import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -429,18 +429,19 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
           }
           nr++;
 
-          Collection<StepStatus> stepStatuses = baseStep.subStatuses();
-          int subIndex = 1;
-          for ( StepStatus status : stepStatuses ) {
-            String[] subFields = status.getTransLogFields( baseStep.getStatus().getDescription() );
-            subFields[1] = "     " + subFields[1];
-            TableItem subItem = new TableItem( table, SWT.NONE );
-            subItem.setText( 0, num + "." + subIndex++ );
-
-            for ( int f = 1; f < subFields.length; f++ ) {
-              subItem.setText( f, subFields[f] );
-            }
-          }
+//          Collection<StepStatus> stepStatuses = baseStep.subStatuses();
+//          //stepStatuses.size()
+//          int subIndex = 1;
+//          for ( StepStatus status : stepStatuses ) {
+//            String[] subFields = status.getTransLogFields( baseStep.getStatus().getDescription() );
+//            subFields[1] = "     " + subFields[1];
+//            TableItem subItem = new TableItem( table, SWT.NONE );
+//            subItem.setText( 0, num + "." + subIndex++ );
+//
+//            for ( int f = 1; f < subFields.length; f++ ) {
+//              subItem.setText( f, subFields[f] );
+//            }
+//          }
         }
       }
       // Only need to re-sort if the output has been sorted differently to the default
