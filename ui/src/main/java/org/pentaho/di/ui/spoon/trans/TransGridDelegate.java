@@ -23,7 +23,7 @@
 package org.pentaho.di.ui.spoon.trans;
 
 import java.util.ArrayList;
-//import java.util.Collection;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -331,10 +331,25 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
     if ( transGraph.trans != null && !transGraph.trans.isPreparing() && msSinceLastUpdate > UPDATE_TIME_VIEW ) {
       lastUpdateView = time;
 
+
+
       nrSteps = transGraph.trans.nrSteps();
+      log.logMinimal( "NumberBaseSteps = " + nrSteps );
+
       totalSteps = nrSteps;
+
+      for ( int i = 0; i < totalSteps; i++ ) {
+        StepInterface baseStep = transGraph.trans.getRunThread( i );
+        nrSteps += baseStep.subStatuses().size();
+      }
+      log.logMinimal( "NumberBaseAndSubSteps = " + nrSteps );
+
+
+
+
       if ( hideInactiveSteps ) {
         nrSteps = transGraph.trans.nrActiveSteps();
+        log.logMinimal( "hideInactive - nrSteps = " + nrSteps );
       }
 
       StepExecutionStatus[] stepStatusLookup = transGraph.trans.getTransStepExecutionStatusLookup();
@@ -344,10 +359,14 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
       boolean sortDescending = transGridView.isSortingDescending();
       int[] selectedItems = transGridView.getSelectionIndices();
 
+
+      log.logMinimal( "Refresh View3 - Table item count = " + table.getItemCount() );
       if ( table.getItemCount() != nrSteps ) {
         table.removeAll();
+        log.logMinimal( "Refresh View3 - Table remove all" );
       } else {
         insert = false;
+        log.logMinimal( "Refresh View3 - insert = false" );
       }
 
       if ( nrSteps == 0 && table.getItemCount() == 0 ) {
@@ -356,9 +375,8 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
         return;
       }
 
-      int nr = 0;
-
       for ( int i = 0; i < totalSteps; i++ ) {
+        log.logMinimal( "Iterating over total steps i = " + i);
         StepInterface baseStep = transGraph.trans.getRunThread( i );
 
         // See if the step is selected & in need of display
@@ -389,10 +407,13 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
           || ( !hideInactiveSteps && stepStatusLookup[i] != StepExecutionStatus.STATUS_EMPTY ) ) {
           TableItem ti = null;
           if ( insert ) {
+            log.logMinimal( "New Table Item");
             ti = new TableItem( table, SWT.NONE );
           } else {
-            ti = table.getItem( nr );
+            log.logMinimal( "Getting existing item at i = " + i );
+            ti = table.getItem( i );
           }
+
 
           if ( ti == null ) {
             continue;
@@ -403,49 +424,93 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
             ti.setText( 0, num );
           }
 
-          if ( ti.getText( 0 ).length() > 0 ) {
-            Integer tIndex = Integer.parseInt( ti.getText( 0 ) );
-            tIndex--;
-            baseStep = transGraph.trans.getRunThread( tIndex );
+          //TODO: I think this is the step that makes it all happen, resets base step to whatever
+          //TODO: step number is listed in the table.
+
+          String tableStepNumber = ti.getText( 0 );
+          log.logMinimal( "tableStepNumber = " + tableStepNumber );
+          String[] tableStepNumberSplit = tableStepNumber.split( "\\." );
+          String tableBaseStepNumber = tableStepNumberSplit[0];
+          log.logMinimal( "tableBaseStepNumber = " + tableBaseStepNumber );
+          String tableSubStepNumber = "0";
+          if ( tableStepNumberSplit.length > 1 ) {
+             tableSubStepNumber = tableStepNumberSplit[1];
+          }
+          log.logMinimal( "tableSubStepNumber = " + tableSubStepNumber );
+
+          boolean isSubStep = !"0".equals( tableSubStepNumber );
+
+
+
+          if ( tableBaseStepNumber.length() > 0 ) {
+            //if is a base step number
+           // if( tableStepNumber.endsWith( ".0" ) ) {
+              Integer tIndex = Integer.parseInt( tableBaseStepNumber );
+              tIndex--;
+
+              //replace base step with the base step that matches the table step number
+              baseStep = transGraph.trans.getRunThread( tIndex );
+           // }
+
           }
 
-          StepStatus stepStatus = new StepStatus( baseStep );
+          if ( !isSubStep ) {
+            StepStatus stepStatus = new StepStatus( baseStep );
 
-          String[] fields = stepStatus.getTransLogFields();
+            String[] fields = stepStatus.getTransLogFields();
 
-          // Anti-flicker: if nothing has changed, don't change it on the
-          // screen!
-          for ( int f = 1; f < fields.length; f++ ) {
-            if ( !fields[f].equalsIgnoreCase( ti.getText( f ) ) ) {
-              ti.setText( f, fields[f] );
+            // Anti-flicker: if nothing has changed, don't change it on the
+            // screen!
+            for ( int f = 1; f < fields.length; f++ ) {
+              if ( !fields[ f ].equalsIgnoreCase( ti.getText( f ) ) ) {
+                ti.setText( f, fields[ f ] );
+              }
+            }
+
+            // Error lines should appear in red:
+            if ( baseStep.getErrors() > 0 ) {
+              ti.setBackground( GUIResource.getInstance().getColorRed() );
+            } else {
+              ti.setBackground( GUIResource.getInstance().getColorWhite() );
+            }
+
+            //write out substeps
+            Collection<StepStatus> subStepStatuses = baseStep.subStatuses();
+            int subIndex = 1;
+
+            if ( insert ) {
+              for ( StepStatus subStepStatus : subStepStatuses ) {
+                String[] subFields = subStepStatus.getTransLogFields( baseStep.getStatus().getDescription() );
+                subFields[ 1 ] = "     " + subFields[ 1 ];
+                TableItem subItem = new TableItem( table, SWT.NONE );
+                subItem.setText( 0, num + "." + subIndex++ );
+                for ( int f = 1; f < subFields.length; f++ ) {
+                  subItem.setText( f, subFields[ f ] );
+                }
+              }
+            }
+          } else {
+
+            Collection<StepStatus> subStepStatuses = baseStep.subStatuses();
+            int subIndex = 1;
+            for ( StepStatus subStepStatus : subStepStatuses ) {
+              String[] subFields = subStepStatus.getTransLogFields( baseStep.getStatus().getDescription() );
+              if ( subFields[ 0 ].equals( tableSubStepNumber ) ) {
+                subFields[ 1 ] = "     " + subFields[ 1 ];
+                ti.setText( 0, num + "." + subIndex++ );
+                for ( int f = 1; f < subFields.length; f++ ) {
+                  ti.setText( f, subFields[ f ] );
+                }
+              }
             }
           }
-
-          // Error lines should appear in red:
-          if ( baseStep.getErrors() > 0 ) {
-            ti.setBackground( GUIResource.getInstance().getColorRed() );
-          } else {
-            ti.setBackground( GUIResource.getInstance().getColorWhite() );
-          }
-          nr++;
-
-//          Collection<StepStatus> stepStatuses = baseStep.subStatuses();
-//          //stepStatuses.size()
-//          int subIndex = 1;
-//          for ( StepStatus status : stepStatuses ) {
-//            String[] subFields = status.getTransLogFields( baseStep.getStatus().getDescription() );
-//            subFields[1] = "     " + subFields[1];
-//            TableItem subItem = new TableItem( table, SWT.NONE );
-//            subItem.setText( 0, num + "." + subIndex++ );
-//
-//            for ( int f = 1; f < subFields.length; f++ ) {
-//              subItem.setText( f, subFields[f] );
-//            }
-//          }
         }
       }
+
+      log.logMinimal( "Refresh View4" );
       // Only need to re-sort if the output has been sorted differently to the default
       if ( table.getItemCount() > 0 && ( sortColumn != 0 || sortDescending ) ) {
+        log.logMinimal( "TransGridDelegate - RE-SORT" );
         transGridView.sortTable( transGridView.getSortField(), sortDescending );
       }
 
@@ -478,6 +543,28 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
     }
 
     refresh_busy = false;
+  }
+
+  /**
+   * Get Row number with value from table
+   * @param colnr the column number to search for the value in the table
+   * @param cellValue the cell string value to search for in the table
+   * @return the first cell in the colnr column containing the cellValue, -1 if the table column row cells do not contain the value
+   */
+  public int getRowNumberWithValue(Table table, int colnr, String cellValue) {
+    int rows = table.getItemCount();
+    int column = colnr + 1;
+    for ( int i = 0; i < rows; i++ ) {
+      TableItem row = table.getItem( i );
+      String cell = row.getText( column );
+      if(cellValue == null && cell == null) {
+        return i;
+      }
+      if(cellValue.equals( cell )) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   public CTabItem getTransGridTab() {

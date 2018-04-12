@@ -88,6 +88,8 @@ import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.exception.KettleValueException;
+import org.pentaho.di.core.logging.LogChannel;
+import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -193,6 +195,8 @@ public class TableView extends Composite {
   private boolean isTextButton = false;
   private boolean addIndexColumn = true;
 
+  private LogChannelInterface log;
+
   private TableViewModifyListener tableViewModifyListener = new TableViewModifyListener() {
     @Override
     public void moveRow( int position1, int position2 ) {
@@ -242,6 +246,8 @@ public class TableView extends Composite {
     this.variables = space;
     this.addIndexColumn = addIndexColumn;
     this.lsFocusInTabItem = lsnr;
+
+    this.log = LogChannel.GENERAL;
 
     sortfield = 0;
     sortfieldLast = -1;
@@ -1338,11 +1344,13 @@ public class TableView extends Composite {
       this.sortingDescending = sortingDescending;
       shouldRefresh = true;
     }
-
+    log.logMinimal( "TableView - ShouldRefresh = " + shouldRefresh );
+    log.logMinimal( "TableView - table.getItemCount() = " + table.getItemCount() );
+    log.logMinimal( "TableView - lastRowCount = " + lastRowCount );
     if ( !shouldRefresh && table.getItemCount() == lastRowCount ) {
       return;
     }
-
+    log.logMinimal( "TableView - Sorting" );
     removeEmptyRows();
 
     try {
@@ -1477,6 +1485,7 @@ public class TableView extends Composite {
       table.setSortColumn( table.getColumn( sortfield ) );
       table.setSortDirection( sortingDescending ? SWT.DOWN : SWT.UP );
 
+      lastRowCount = table.getItemCount();
     } catch ( Exception e ) {
       new ErrorDialog( this.getShell(), BaseMessages.getString( PKG, "TableView.ErrorDialog.title" ), BaseMessages
         .getString( PKG, "TableView.ErrorDialog.description" ), e );
