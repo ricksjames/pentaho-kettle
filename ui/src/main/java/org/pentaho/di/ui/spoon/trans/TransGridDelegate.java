@@ -305,8 +305,8 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
 
   private void refreshView() {
     boolean insert = true;
-    int nrSteps = -1;
-    int totalSteps = -1;
+    int numberStepsToDisplay = -1;
+    int baseStepCount = -1;
 
     if ( transGridView == null || transGridView.isDisposed() ) {
       return;
@@ -331,37 +331,39 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
     if ( transGraph.trans != null && !transGraph.trans.isPreparing() && msSinceLastUpdate > UPDATE_TIME_VIEW ) {
       lastUpdateView = time;
 
+      baseStepCount = transGraph.trans.nrSteps();
 
 
-      nrSteps = transGraph.trans.nrSteps();
-      log.logMinimal( "NumberBaseSteps = " + nrSteps );
-
-      totalSteps = nrSteps;
-
-      for ( int i = 0; i < totalSteps; i++ ) {
-        StepInterface baseStep = transGraph.trans.getRunThread( i );
-        nrSteps += baseStep.subStatuses().size();
-      }
-      log.logMinimal( "NumberBaseAndSubSteps = " + nrSteps );
-
-
-
-
-      if ( hideInactiveSteps ) {
-        nrSteps = transGraph.trans.nrActiveSteps();
-        log.logMinimal( "hideInactive - nrSteps = " + nrSteps );
-      }
+      log.logMinimal( "BaseStepCount = " + baseStepCount );
 
       StepExecutionStatus[] stepStatusLookup = transGraph.trans.getTransStepExecutionStatusLookup();
       boolean[] isRunningLookup = transGraph.trans.getTransStepIsRunningLookup();
 
-      int sortColumn = transGridView.getSortField();
-      boolean sortDescending = transGridView.isSortingDescending();
-      int[] selectedItems = transGridView.getSelectionIndices();
+      if ( hideInactiveSteps ) {
+        numberStepsToDisplay = transGraph.trans.nrActiveSteps();
+        log.logMinimal( "hideInactive - numberStepsToDisplay = " + numberStepsToDisplay );
+      } else {
+        numberStepsToDisplay = baseStepCount;
+      }
+
+      //Count sub steps
+      for ( int i = 0; i < baseStepCount; i++ ) {
+        //if inactive steps are hidden, only count sub steps of active base steps
+        if ( !hideInactiveSteps || (isRunningLookup[i] || stepStatusLookup[i] != StepExecutionStatus.STATUS_FINISHED) ) {
+          StepInterface baseStep = transGraph.trans.getRunThread( i );
+          numberStepsToDisplay += baseStep.subStatuses().size();
+        }
+      }
+      log.logMinimal( "numberStepsToDisplay = " + numberStepsToDisplay );
+
+
+
+
+
 
 
       log.logMinimal( "Refresh View3 - Table item count = " + table.getItemCount() );
-      if ( table.getItemCount() != nrSteps ) {
+      if ( table.getItemCount() != numberStepsToDisplay ) {
         table.removeAll();
         log.logMinimal( "Refresh View3 - Table remove all" );
       } else {
@@ -369,13 +371,13 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
         log.logMinimal( "Refresh View3 - insert = false" );
       }
 
-      if ( nrSteps == 0 && table.getItemCount() == 0 ) {
+      if ( numberStepsToDisplay == 0 && table.getItemCount() == 0 ) {
         new TableItem( table, SWT.NONE );
         refresh_busy = false;
         return;
       }
 
-      for ( int i = 0; i < totalSteps; i++ ) {
+      for ( int i = 0; i < baseStepCount; i++ ) {
         log.logMinimal( "Iterating over total steps i = " + i);
         StepInterface baseStep = transGraph.trans.getRunThread( i );
 
@@ -401,6 +403,9 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
         // when "Hide active" steps is enabled show only alive steps
         // otherwise only those that have not STATUS_EMPTY
         //
+
+        //TODO: HIDING INACTIVE CAUSES SORT TO BREAK, FIGURE OUT HOW TO FIX.
+
         if ( showSelected
           && ( hideInactiveSteps && ( isRunningLookup[i]
           || stepStatusLookup[i] != StepExecutionStatus.STATUS_FINISHED ) )
@@ -438,7 +443,7 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
           }
           log.logMinimal( "tableSubStepNumber = " + tableSubStepNumber );
 
-          boolean isSubStep = !"0".equals( tableSubStepNumber );
+
 
 
 
@@ -453,6 +458,8 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
            // }
 
           }
+
+          boolean isSubStep = !"0".equals( tableSubStepNumber );
 
           if ( !isSubStep ) {
             StepStatus stepStatus = new StepStatus( baseStep );
@@ -508,6 +515,8 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
       }
 
       log.logMinimal( "Refresh View4" );
+      int sortColumn = transGridView.getSortField();
+      boolean sortDescending = transGridView.isSortingDescending();
       // Only need to re-sort if the output has been sorted differently to the default
       if ( table.getItemCount() > 0 && ( sortColumn != 0 || sortDescending ) ) {
         log.logMinimal( "TransGridDelegate - RE-SORT" );
@@ -527,6 +536,8 @@ public class TransGridDelegate extends SpoonDelegate implements XulEventHandler 
 
       // if (updateRowNumbers) { transGridView.setRowNums(); }
       transGridView.optWidth( true );
+
+      int[] selectedItems = transGridView.getSelectionIndices();
 
       if ( selectedItems != null && selectedItems.length > 0 ) {
         transGridView.setSelection( selectedItems );
