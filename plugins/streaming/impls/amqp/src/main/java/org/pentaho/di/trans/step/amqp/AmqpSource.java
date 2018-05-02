@@ -39,7 +39,7 @@ public class AmqpSource extends BlockingQueueStreamSource<List<Object>> {
   //TODO: implement header args
   Map<String, Object> arguments = null;
 
-  public AmqpSource(AmqpConsumerMeta streamMeta, AmqpConsumer streamStep ) {
+  public AmqpSource( AmqpConsumerMeta streamMeta, AmqpConsumer streamStep ) {
     super( streamStep );
     this.streamMeta = streamMeta;
     this.amqpConsumer = streamStep;
@@ -54,40 +54,42 @@ public class AmqpSource extends BlockingQueueStreamSource<List<Object>> {
 
     try {
       ConnectionFactory factory = new ConnectionFactory();
-      factory.setHost(streamMeta.getHostname());
+      factory.setHost( streamMeta.getHostname() );
       connection = factory.newConnection();
       channel = connection.createChannel();
 
 
-      logChannel.logDebug("streamMeta.getExchange(): " + streamMeta.getExchange());
-      logChannel.logDebug("streamMeta.getExchangeType(): " + streamMeta.getExchangeType());
-      logChannel.logDebug("streamMeta.getQueue():" + streamMeta.getQueue());
+      logChannel.logDebug( "streamMeta.getExchange(): " + streamMeta.getExchange() );
+      logChannel.logDebug( "streamMeta.getExchangeType(): " + streamMeta.getExchangeType() );
+      logChannel.logDebug( "streamMeta.getQueue():" + streamMeta.getQueue() );
 
-      boolean defaultExchangeType = "default".equals(streamMeta.getExchangeType());
+      boolean defaultExchangeType = "default".equals( streamMeta.getExchangeType() );
 
-      if (!defaultExchangeType) {
-        channel.exchangeDeclare(streamMeta.getExchange(), streamMeta.getExchangeType(), streamMeta.isExchangeDurable(), streamMeta.isExchangeExclusive(),streamMeta.isExchangeAutoDelete(), null);
+      if ( !defaultExchangeType ) {
+        channel.exchangeDeclare( streamMeta.getExchange(), streamMeta.getExchangeType(), streamMeta.isExchangeDurable(),
+          streamMeta.isExchangeExclusive(), streamMeta.isExchangeAutoDelete(), null );
       }
 
       //TODO: handle temporary queues
-      channel.queueDeclare(streamMeta.getQueue(), streamMeta.isQueueDurable(), streamMeta.isQueueExclusive(), streamMeta.isQueueAutoDelete(), null);
+      channel.queueDeclare( streamMeta.getQueue(), streamMeta.isQueueDurable(), streamMeta.isQueueExclusive(),
+        streamMeta.isQueueAutoDelete(), null );
 
-      if (!defaultExchangeType) {
-        if (streamMeta.getRoutingKeys() != null) {
-          for (String routingKey : streamMeta.getRoutingKeys()) {
+      if ( !defaultExchangeType ) {
+        if ( streamMeta.getRoutingKeys() != null ) {
+          for ( String routingKey : streamMeta.getRoutingKeys() ) {
 
-            logChannel.logDebug("streamMeta.routingKeys():" + routingKey);
-            channel.queueBind(streamMeta.getQueue(), streamMeta.getExchange(), routingKey, arguments);
+            logChannel.logDebug( "streamMeta.routingKeys():" + routingKey );
+            channel.queueBind( streamMeta.getQueue(), streamMeta.getExchange(), routingKey, arguments );
           }
         }
       }
 
-      if(arguments != null ) {
-        channel.queueBind(streamMeta.getQueue(), streamMeta.getExchange(), "", arguments);
+      if ( arguments != null ) {
+        channel.queueBind( streamMeta.getQueue(), streamMeta.getExchange(), "", arguments );
       }
 
     } catch ( IOException | TimeoutException e ) {
-      logChannel.logError("Exception while setting up consumer...");
+      logChannel.logError( "Exception while setting up consumer..." );
       amqpConsumer.logError( e.toString() );
       amqpConsumer.stopAll();
 
@@ -102,15 +104,15 @@ public class AmqpSource extends BlockingQueueStreamSource<List<Object>> {
     future.cancel( true );
 
     try {
-      if (channel.isOpen()) {
+      if ( channel.isOpen() ) {
         channel.close();
       }
-      if(connection.isOpen()) {
+      if ( connection.isOpen() ) {
         connection.close();
       }
 
-    } catch (IOException | TimeoutException e) {
-      logChannel.logError("Error Closing connection");
+    } catch ( IOException | TimeoutException e ) {
+      logChannel.logError( "Error Closing connection" );
     }
     super.close();
 
@@ -118,32 +120,34 @@ public class AmqpSource extends BlockingQueueStreamSource<List<Object>> {
   }
 
   private void readLoop() {
-      //TODO: implement autoAck
-      boolean autoAck = true;
+    //TODO: implement autoAck
+    boolean autoAck = true;
 
-      logChannel.logDebug( "Waiting for messages. ");
-      Consumer consumer = new DefaultConsumer(channel) {
-        @Override
-        public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-          String message = new String(body, Charset.defaultCharset());
+    logChannel.logDebug( "Waiting for messages. " );
+    Consumer consumer = new DefaultConsumer( channel ) {
+      @Override
+      public void handleDelivery( String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body )
+        throws IOException {
+        String message = new String( body, Charset.defaultCharset() );
 
-          acceptRows( singletonList(ImmutableList.of(message)));
+        acceptRows( singletonList(
+          ImmutableList.of( message, streamMeta.getQueue(), envelope.getRoutingKey(), envelope.getExchange() ) ) );
 
 
-          logChannel.logDebug( "Received Message:" + message);
+        logChannel.logDebug( "Received Message:" + message );
 
-          if ( !autoAck ) {
-            System.out.println(" [x] Done");
-            channel.basicAck(envelope.getDeliveryTag(), false);
-          }
+        if ( !autoAck ) {
+          System.out.println( " [x] Done" );
+          channel.basicAck( envelope.getDeliveryTag(), false );
         }
-      };
-
-      try {
-        channel.basicConsume(streamMeta.getQueue(), autoAck, arguments, consumer);
-      } catch (IOException e) {
-        logChannel.logDebug( "Error with basic consumer" + e.getMessage());
       }
+    };
+
+    try {
+      channel.basicConsume( streamMeta.getQueue(), autoAck, arguments, consumer );
+    } catch ( IOException e ) {
+      logChannel.logDebug( "Error with basic consumer" + e.getMessage() );
+    }
 
   }
 

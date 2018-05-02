@@ -1,12 +1,15 @@
 package org.pentaho.di.trans.step.amqp;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
@@ -46,9 +49,9 @@ public class AmqpConsumerDialog extends BaseStreamingDialog implements StepDialo
 
   private TableView routingKeyTable;
   private Label wlRoutingKey;
-  private ComboVar wMessageField;
+  private TableView fieldsTable;
 
-  public AmqpConsumerDialog(Shell parent, Object in, TransMeta tr, String sname ) {
+  public AmqpConsumerDialog( Shell parent, Object in, TransMeta tr, String sname ) {
     super( parent, in, tr, sname );
     streamMeta = (AmqpConsumerMeta) in;
   }
@@ -71,7 +74,7 @@ public class AmqpConsumerDialog extends BaseStreamingDialog implements StepDialo
 
     //Hostname
     wHostname = new TextVar( transMeta, wSetupComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook(wHostname);
+    props.setLook( wHostname );
     wHostname.addModifyListener( lsMod );
     FormData fdHostname = new FormData();
     fdHostname.left = new FormAttachment( 0, 0 );
@@ -104,11 +107,11 @@ public class AmqpConsumerDialog extends BaseStreamingDialog implements StepDialo
     wExchangeType.add( "topic" );
     wExchangeType.add( "headers" );
 
-    wExchangeType.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
+    wExchangeType.addSelectionListener( new SelectionAdapter() {
+      public void widgetSelected( SelectionEvent e ) {
         exchangeChanged();
       }
-    });
+    } );
 
     //Exchange Name Label
     wlExchangeName = new Label( wSetupComp, SWT.LEFT );
@@ -217,30 +220,30 @@ public class AmqpConsumerDialog extends BaseStreamingDialog implements StepDialo
     wlRoutingKey.setLayoutData( fdlRoutingKey );
 
     //Routing Keys
-    buildRoutingKeysTable(wSetupComp, wlRoutingKey);
+    buildRoutingKeysTable( wSetupComp, wlRoutingKey );
 
 
   }
 
-  private void buildRoutingKeysTable(Composite parentWidget, Control controlAbove/*, Control controlBelow*/ ) {
+  private void buildRoutingKeysTable( Composite parentWidget, Control controlAbove/*, Control controlBelow*/ ) {
     ColumnInfo[] columns =
-            new ColumnInfo[] { new ColumnInfo( BaseMessages.getString( PKG, "AmqpDialog.RoutingKeys.Label" ),
-                    ColumnInfo.COLUMN_TYPE_TEXT, new String[ 1 ], false ) };
+      new ColumnInfo[] { new ColumnInfo( BaseMessages.getString( PKG, "AmqpDialog.RoutingKeys.Label" ),
+        ColumnInfo.COLUMN_TYPE_TEXT, new String[ 1 ], false ) };
 
     columns[ 0 ].setUsingVariables( true );
 
     int topicsCount = streamMeta.getRoutingKeys().size();
 
     routingKeyTable = new TableView(
-            transMeta,
-            parentWidget,
-            SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI,
-            columns,
-            topicsCount,
-            false,
-            lsMod,
-            props,
-            false
+      transMeta,
+      parentWidget,
+      SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI,
+      columns,
+      topicsCount,
+      false,
+      lsMod,
+      props,
+      false
     );
 
     routingKeyTable.setSortable( false );
@@ -269,48 +272,158 @@ public class AmqpConsumerDialog extends BaseStreamingDialog implements StepDialo
 
   private void exchangeChanged() {
 
-    boolean defaultSelected = "default".equals(wExchangeType.getText());
+    boolean defaultSelected = "default".equals( wExchangeType.getText() );
 
-    wlExchangeName.setEnabled(!defaultSelected);
-    wExchangeName.setEnabled(!defaultSelected);
-    wExchangeDurable.setEnabled(!defaultSelected);
-    wExchangeExclusive.setEnabled(!defaultSelected);
-    wExchangeAutoDelete.setEnabled(!defaultSelected);
-    wlRoutingKey.setEnabled(!defaultSelected);
-    routingKeyTable.setEnabled(!defaultSelected);
+    wlExchangeName.setEnabled( !defaultSelected );
+    wExchangeName.setEnabled( !defaultSelected );
+    wExchangeDurable.setEnabled( !defaultSelected );
+    wExchangeExclusive.setEnabled( !defaultSelected );
+    wExchangeAutoDelete.setEnabled( !defaultSelected );
+    wlRoutingKey.setEnabled( !defaultSelected );
+    routingKeyTable.setEnabled( !defaultSelected );
   }
 
   @Override protected void additionalOks( BaseStreamStepMeta meta ) {
-    streamMeta.setHostname(wHostname.getText());
 
-    streamMeta.setExchangeType(wExchangeType.getText());
-    streamMeta.setExchange(wExchangeName.getText());
-    streamMeta.setExchangeDurable(wExchangeDurable.getSelection());
-    streamMeta.setExchangeExclusive(wExchangeExclusive.getSelection());
-    streamMeta.setExchangeAutoDelete(wExchangeAutoDelete.getSelection());
+    streamMeta.setMsgOutputName( fieldsTable.getTable().getItem( 0 ).getText( 2 ) );
+    streamMeta.setQueueOutputName( fieldsTable.getTable().getItem( 1 ).getText( 2 ) );
+    streamMeta.setRoutingKeyOutputName( fieldsTable.getTable().getItem( 2 ).getText( 2 ) );
+    streamMeta.setExchangeOutputName( fieldsTable.getTable().getItem( 3 ).getText( 2 ) );
 
-    streamMeta.setQueue(wQueueName.getText());
-    streamMeta.setQueueDurable(wQueueDurable.getSelection());
-    streamMeta.setQueueExclusive(wQueueExclusive.getSelection());
-    streamMeta.setQueueAutoDelete(wQueueAutoDelete.getSelection());
+    streamMeta.setHostname( wHostname.getText() );
+
+    streamMeta.setExchangeType( wExchangeType.getText() );
+    streamMeta.setExchange( wExchangeName.getText() );
+    streamMeta.setExchangeDurable( wExchangeDurable.getSelection() );
+    streamMeta.setExchangeExclusive( wExchangeExclusive.getSelection() );
+    streamMeta.setExchangeAutoDelete( wExchangeAutoDelete.getSelection() );
+
+    streamMeta.setQueue( wQueueName.getText() );
+    streamMeta.setQueueDurable( wQueueDurable.getSelection() );
+    streamMeta.setQueueExclusive( wQueueExclusive.getSelection() );
+    streamMeta.setQueueAutoDelete( wQueueAutoDelete.getSelection() );
 
     streamMeta.setRoutingKeys( stream( routingKeyTable.getTable().getItems() )
-            .map( item -> item.getText( 1 ) )
-            .filter( t -> !"".equals( t ) )
-            .distinct()
-            .collect( Collectors.toList() ) );
+      .map( item -> item.getText( 1 ) )
+      .filter( t -> !"".equals( t ) )
+      .distinct()
+      .collect( Collectors.toList() ) );
   }
 
   @Override protected void createAdditionalTabs() {
     shell.setMinimumSize( 527, 600 );
+    buildFieldsTab();
+  }
+
+  private void buildFieldsTab() {
+    CTabItem wFieldsTab = new CTabItem( wTabFolder, SWT.NONE, 3 );
+    wFieldsTab.setText( BaseMessages.getString( PKG, "AmqpDialog.FieldsTab" ) );
+
+    Composite wFieldsComp = new Composite( wTabFolder, SWT.NONE );
+    props.setLook( wFieldsComp );
+    FormLayout fieldsLayout = new FormLayout();
+    fieldsLayout.marginHeight = 15;
+    fieldsLayout.marginWidth = 15;
+    wFieldsComp.setLayout( fieldsLayout );
+
+    FormData fieldsFormData = new FormData();
+    fieldsFormData.left = new FormAttachment( 0, 0 );
+    fieldsFormData.top = new FormAttachment( wFieldsComp, 0 );
+    fieldsFormData.right = new FormAttachment( 100, 0 );
+    fieldsFormData.bottom = new FormAttachment( 100, 0 );
+    wFieldsComp.setLayoutData( fieldsFormData );
+
+    buildFieldTable( wFieldsComp, wFieldsComp );
+
+    wFieldsComp.layout();
+    wFieldsTab.setControl( wFieldsComp );
+  }
+
+  private void buildFieldTable( Composite parentWidget, Control relativePosition ) {
+    ColumnInfo[] columns = getFieldColumns();
+
+    fieldsTable = new TableView(
+      transMeta,
+      parentWidget,
+      SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI,
+      columns,
+      4,
+      true,
+      lsMod,
+      props,
+      false
+    );
+
+    fieldsTable.setSortable( false );
+    fieldsTable.getTable().addListener( SWT.Resize, event -> {
+      Table table = (Table) event.widget;
+      table.getColumn( 1 ).setWidth( 147 );
+      table.getColumn( 2 ).setWidth( 147 );
+      table.getColumn( 3 ).setWidth( 147 );
+    } );
+
+    populateFieldData();
+
+    FormData fdData = new FormData();
+    fdData.left = new FormAttachment( 0, 0 );
+    fdData.top = new FormAttachment( relativePosition, 5 );
+    fdData.right = new FormAttachment( 100, 0 );
+
+    // resize the columns to fit the data in them
+    stream( fieldsTable.getTable().getColumns() ).forEach( column -> {
+      if ( column.getWidth() > 0 ) {
+        // don't pack anything with a 0 width, it will resize it to make it visible (like the index column)
+        column.setWidth( 120 );
+      }
+    } );
+
+    // don't let any rows get deleted or added (this does not affect the read-only state of the cells)
+    fieldsTable.setReadonly( true );
+    fieldsTable.setLayoutData( fdData );
+  }
+
+  private void populateFieldData() {
+    TableItem messageItem = fieldsTable.getTable().getItem( 0 );
+    messageItem.setText( 1, BaseMessages.getString( PKG, "AmqpDialog.InputName.Message" ) );
+    messageItem.setText( 2, streamMeta.getMsgOutputName() );
+    messageItem.setText( 3, "String" );
+
+    TableItem topicItem = fieldsTable.getTable().getItem( 1 );
+    topicItem.setText( 1, BaseMessages.getString( PKG, "AmqpDialog.InputName.Queue" ) );
+    topicItem.setText( 2, streamMeta.getQueueOutputName() );
+    topicItem.setText( 3, "String" );
+
+    TableItem routingKeyItem = fieldsTable.getTable().getItem( 2 );
+    routingKeyItem.setText( 1, BaseMessages.getString( PKG, "AmqpDialog.InputName.RoutingKey" ) );
+    routingKeyItem.setText( 2, streamMeta.getRoutingKeyOutputName() );
+    routingKeyItem.setText( 3, "String" );
+
+    TableItem exchangeItem = fieldsTable.getTable().getItem( 3 );
+    exchangeItem.setText( 1, BaseMessages.getString( PKG, "AmqpDialog.InputName.Exchange" ) );
+    exchangeItem.setText( 2, streamMeta.getExchangeOutputName() );
+    exchangeItem.setText( 3, "String" );
+  }
+
+  private ColumnInfo[] getFieldColumns() {
+    ColumnInfo referenceName = new ColumnInfo( BaseMessages.getString( PKG, "AmqpDialog.Column.Ref" ),
+      ColumnInfo.COLUMN_TYPE_TEXT, false, true );
+
+    ColumnInfo name = new ColumnInfo( BaseMessages.getString( PKG, "AmqpDialog.Column.Name" ),
+      ColumnInfo.COLUMN_TYPE_TEXT, false, false );
+
+    ColumnInfo type = new ColumnInfo( BaseMessages.getString( PKG, "AmqpDialog.Column.Type" ),
+      ColumnInfo.COLUMN_TYPE_TEXT, false, true );
+
+    return new ColumnInfo[] { referenceName, name, type };
   }
 
   @Override protected int[] getFieldTypes() {
-    return new int[]{ ValueMetaInterface.TYPE_STRING };
+    return stream( fieldsTable.getTable().getItems() )
+      .mapToInt( row -> ValueMetaFactory.getIdForValueMeta( row.getText( 3 ) ) ).toArray();
   }
 
   @Override protected String[] getFieldNames() {
-    return new String[]{ "line" };
+    return stream( fieldsTable.getTable().getItems() ).map( row -> row.getText( 2 ) ).toArray( String[]::new );
   }
 
   @Override protected void getData() {
@@ -319,12 +432,12 @@ public class AmqpConsumerDialog extends BaseStreamingDialog implements StepDialo
 
     wExchangeType.setText( nullToEmpty( streamMeta.getExchangeType() ) );
     wExchangeName.setText( nullToEmpty( streamMeta.getExchange() ) );
-    wExchangeDurable.setSelection(streamMeta.isExchangeDurable());
+    wExchangeDurable.setSelection( streamMeta.isExchangeDurable() );
     wExchangeExclusive.setSelection( streamMeta.isExchangeExclusive() );
     wExchangeAutoDelete.setSelection( streamMeta.isExchangeAutoDelete() );
 
     wQueueName.setText( nullToEmpty( streamMeta.getQueue() ) );
-    wQueueDurable.setSelection(streamMeta.isQueueDurable());
+    wQueueDurable.setSelection( streamMeta.isQueueDurable() );
     wQueueExclusive.setSelection( streamMeta.isQueueExclusive() );
     wQueueAutoDelete.setSelection( streamMeta.isQueueAutoDelete() );
 

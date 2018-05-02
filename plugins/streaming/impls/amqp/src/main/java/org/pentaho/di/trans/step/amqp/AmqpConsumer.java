@@ -19,8 +19,8 @@ public class AmqpConsumer extends BaseStreamStep implements StepInterface {
   private static Class<?> PKG = AmqpConsumer.class; // for i18n purposes, needed by Translator2!!   $NON-NLS-1$
 
 
-  public AmqpConsumer(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
-                      Trans trans ) {
+  public AmqpConsumer( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
+                       Trans trans ) {
     super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
   }
 
@@ -29,7 +29,8 @@ public class AmqpConsumer extends BaseStreamStep implements StepInterface {
     Preconditions.checkNotNull( stepMetaInterface );
     AmqpConsumerMeta streamMeta = (AmqpConsumerMeta) stepMetaInterface;
 
-    window = new FixedTimeStreamWindow<>( subtransExecutor, streamMeta.getRowMeta( getStepname(), this ), getDuration(), getBatchSize() );
+    window = new FixedTimeStreamWindow<>( subtransExecutor, streamMeta.getRowMeta( getStepname(), this ), getDuration(),
+      getBatchSize() );
 
     source = new AmqpSource( streamMeta, this );
 

@@ -25,6 +25,10 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
 
   private static Class<?> PKG = AmqpConsumerMeta.class; // for i18n purposes, needed by Translator2!!   $NON-NLS-1$
 
+  public static final String MSG_OUTPUT_NAME = "msgOutputName";
+  public static final String QUEUE_OUTPUT_NAME = "queueOutputName";
+  public static final String ROUTING_KEY_OUTPUT_NAME = "routingKeyOutputName";
+  public static final String EXCHANGE_OUTPUT_NAME = "exchangeOutputName";
   public static final String HOSTNAME = "hostname";
   public static final String EXCHANGE = "exchange";
   public static final String EXCHANGE_TYPE = "exchangeType";
@@ -39,7 +43,20 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
 
   //use injection annotation to automagically get load/save behavior
   //example
-  @Injection( name = HOSTNAME)
+
+  @Injection( name = MSG_OUTPUT_NAME )
+  private String msgOutputName = "Message";
+
+  @Injection( name = QUEUE_OUTPUT_NAME )
+  private String queueOutputName = "Queue";
+
+  @Injection( name = ROUTING_KEY_OUTPUT_NAME )
+  private String routingKeyOutputName = "RoutingKey";
+
+  @Injection( name = EXCHANGE_OUTPUT_NAME )
+  private String exchangeOutputName = "Exchange";
+
+  @Injection( name = HOSTNAME )
   public String hostname;
 
   @Injection( name = EXCHANGE )
@@ -90,7 +107,10 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
   @Override
   public RowMeta getRowMeta( String origin, VariableSpace space ) {
     RowMeta rowMeta = new RowMeta();
-    rowMeta.addValueMeta( new ValueMetaString( "line" ) );
+    rowMeta.addValueMeta( new ValueMetaString( getMsgOutputName() ) );
+    rowMeta.addValueMeta( new ValueMetaString( getQueueOutputName() ) );
+    rowMeta.addValueMeta( new ValueMetaString( getRoutingKeyOutputName() ) );
+    rowMeta.addValueMeta( new ValueMetaString( getExchangeOutputName() ) );
     return rowMeta;
   }
 
@@ -108,7 +128,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return hostname;
   }
 
-  public void setHostname(String hostname) {
+  public void setHostname( String hostname ) {
     this.hostname = hostname;
   }
 
@@ -116,7 +136,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchange;
   }
 
-  public void setExchange(String exchange) {
+  public void setExchange( String exchange ) {
     this.exchange = exchange;
   }
 
@@ -124,7 +144,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeType;
   }
 
-  public void setExchangeType(String exchangeType) {
+  public void setExchangeType( String exchangeType ) {
     this.exchangeType = exchangeType;
   }
 
@@ -132,7 +152,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return routingKeys;
   }
 
-  public void setRoutingKeys(List<String> routingKeys) {
+  public void setRoutingKeys( List<String> routingKeys ) {
     this.routingKeys = routingKeys;
   }
 
@@ -140,7 +160,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeDurable;
   }
 
-  public void setExchangeDurable(boolean exchangeDurable) {
+  public void setExchangeDurable( boolean exchangeDurable ) {
     this.exchangeDurable = exchangeDurable;
   }
 
@@ -148,7 +168,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeExclusive;
   }
 
-  public void setExchangeExclusive(boolean exchangeExclusive) {
+  public void setExchangeExclusive( boolean exchangeExclusive ) {
     this.exchangeExclusive = exchangeExclusive;
   }
 
@@ -156,7 +176,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeAutoDelete;
   }
 
-  public void setExchangeAutoDelete(boolean exchangeAutoDelete) {
+  public void setExchangeAutoDelete( boolean exchangeAutoDelete ) {
     this.exchangeAutoDelete = exchangeAutoDelete;
   }
 
@@ -164,7 +184,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queue;
   }
 
-  public void setQueue(String queue) {
+  public void setQueue( String queue ) {
     this.queue = queue;
   }
 
@@ -172,7 +192,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queueDurable;
   }
 
-  public void setQueueDurable(boolean queueDurable) {
+  public void setQueueDurable( boolean queueDurable ) {
     this.queueDurable = queueDurable;
   }
 
@@ -180,7 +200,7 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queueExclusive;
   }
 
-  public void setQueueExclusive(boolean queueExclusive) {
+  public void setQueueExclusive( boolean queueExclusive ) {
     this.queueExclusive = queueExclusive;
   }
 
@@ -188,11 +208,41 @@ public class AmqpConsumerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queueAutoDelete;
   }
 
-  public void setQueueAutoDelete(boolean queueAutoDelete) {
+  public void setQueueAutoDelete( boolean queueAutoDelete ) {
     this.queueAutoDelete = queueAutoDelete;
   }
 
+  public String getMsgOutputName() {
+    return msgOutputName;
+  }
 
+  public void setMsgOutputName( String msgOutputName ) {
+    this.msgOutputName = msgOutputName;
+  }
+
+  public String getQueueOutputName() {
+    return queueOutputName;
+  }
+
+  public void setQueueOutputName( String queueOutputName ) {
+    this.queueOutputName = queueOutputName;
+  }
+
+  public String getRoutingKeyOutputName() {
+    return routingKeyOutputName;
+  }
+
+  public void setRoutingKeyOutputName( String routingKeyOutputName ) {
+    this.routingKeyOutputName = routingKeyOutputName;
+  }
+
+  public String getExchangeOutputName() {
+    return exchangeOutputName;
+  }
+
+  public void setExchangeOutputName( String exchangeOutputName ) {
+    this.exchangeOutputName = exchangeOutputName;
+  }
 
   public String getDialogClassName() {
     return "org.pentaho.di.trans.step.amqp.AmqpConsumerDialog";

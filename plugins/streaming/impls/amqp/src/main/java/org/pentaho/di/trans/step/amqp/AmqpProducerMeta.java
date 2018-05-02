@@ -33,10 +33,9 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
   public static final String FIELD_TO_SEND = "fieldToSend";
   public static final String QUEUE = "queue";
 
-
   //use injection annotation to automagically get load/save behavior
   //example
-  @Injection( name = HOSTNAME)
+  @Injection( name = HOSTNAME )
   public String hostname;
 
   @Injection( name = EXCHANGE )
@@ -98,7 +97,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
   @Override
   public RowMeta getRowMeta( String origin, VariableSpace space ) {
     RowMeta rowMeta = new RowMeta();
-    rowMeta.addValueMeta( new ValueMetaString( "line" ) );
+    rowMeta.addValueMeta( new ValueMetaString( "message" ) );
     return rowMeta;
   }
 
@@ -120,7 +119,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return hostname;
   }
 
-  public void setHostname(String hostname) {
+  public void setHostname( String hostname ) {
     this.hostname = hostname;
   }
 
@@ -128,7 +127,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchange;
   }
 
-  public void setExchange(String exchange) {
+  public void setExchange( String exchange ) {
     this.exchange = exchange;
   }
 
@@ -136,7 +135,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeType;
   }
 
-  public void setExchangeType(String exchangeType) {
+  public void setExchangeType( String exchangeType ) {
     this.exchangeType = exchangeType;
   }
 
@@ -144,7 +143,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queue;
   }
 
-  public void setQueue(String queue) {
+  public void setQueue( String queue ) {
     this.queue = queue;
   }
 
@@ -152,7 +151,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return routingKey;
   }
 
-  public void setRoutingKey(String routingKey) {
+  public void setRoutingKey( String routingKey ) {
     this.routingKey = routingKey;
   }
 
@@ -160,7 +159,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeDurable;
   }
 
-  public void setExchangeDurable(boolean exchangeDurable) {
+  public void setExchangeDurable( boolean exchangeDurable ) {
     this.exchangeDurable = exchangeDurable;
   }
 
@@ -168,7 +167,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeExclusive;
   }
 
-  public void setExchangeExclusive(boolean exchangeExclusive) {
+  public void setExchangeExclusive( boolean exchangeExclusive ) {
     this.exchangeExclusive = exchangeExclusive;
   }
 
@@ -176,7 +175,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return exchangeAutoDelete;
   }
 
-  public void setExchangeAutoDelete(boolean exchangeAutoDelete) {
+  public void setExchangeAutoDelete( boolean exchangeAutoDelete ) {
     this.exchangeAutoDelete = exchangeAutoDelete;
   }
 
@@ -184,7 +183,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queueDurable;
   }
 
-  public void setQueueDurable(boolean queueDurable) {
+  public void setQueueDurable( boolean queueDurable ) {
     this.queueDurable = queueDurable;
   }
 
@@ -192,7 +191,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queueExclusive;
   }
 
-  public void setQueueExclusive(boolean queueExclusive) {
+  public void setQueueExclusive( boolean queueExclusive ) {
     this.queueExclusive = queueExclusive;
   }
 
@@ -200,7 +199,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return queueAutoDelete;
   }
 
-  public void setQueueAutoDelete(boolean queueAutoDelete) {
+  public void setQueueAutoDelete( boolean queueAutoDelete ) {
     this.queueAutoDelete = queueAutoDelete;
   }
 
@@ -208,7 +207,7 @@ public class AmqpProducerMeta extends BaseStreamStepMeta implements StepMetaInte
     return fieldToSend;
   }
 
-  public void setFieldToSend(String fieldToSend) {
+  public void setFieldToSend( String fieldToSend ) {
     this.fieldToSend = fieldToSend;
   }
 }

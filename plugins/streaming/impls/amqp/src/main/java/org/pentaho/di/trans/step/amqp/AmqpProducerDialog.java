@@ -135,7 +135,7 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
 
     // Start of tabbed display
     wTabFolder = new CTabFolder( shell, SWT.BORDER );
-    props.setLook(wTabFolder, Props.WIDGET_STYLE_TAB );
+    props.setLook( wTabFolder, Props.WIDGET_STYLE_TAB );
     wTabFolder.setSimple( false );
     wTabFolder.setUnselectedCloseVisible( true );
 
@@ -216,7 +216,7 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
 
     //Hostname
     wHostname = new TextVar( transMeta, wSetupComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook(wHostname);
+    props.setLook( wHostname );
     wHostname.addModifyListener( lsMod );
     FormData fdHostname = new FormData();
     fdHostname.left = new FormAttachment( 0, 0 );
@@ -250,12 +250,11 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
     wExchangeType.add( "headers" );
 
 
-
-    wExchangeType.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
+    wExchangeType.addSelectionListener( new SelectionAdapter() {
+      public void widgetSelected( SelectionEvent e ) {
         exchangeChanged();
       }
-    });
+    } );
 
     //Exchange Name Label
     wlExchangeName = new Label( wSetupComp, SWT.LEFT );
@@ -438,23 +437,22 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
 
   private void exchangeChanged() {
 
-    boolean defaultSelected = "default".equals(wExchangeType.getText());
+    boolean defaultSelected = "default".equals( wExchangeType.getText() );
 
-    wlExchangeName.setEnabled(!defaultSelected);
-    wExchangeName.setEnabled(!defaultSelected);
-    wExchangeDurable.setEnabled(!defaultSelected);
-    wExchangeExclusive.setEnabled(!defaultSelected);
-    wExchangeAutoDelete.setEnabled(!defaultSelected);
-    wlRoutingKey.setEnabled(!defaultSelected);
-    wRoutingKey.setEnabled(!defaultSelected);
+    wlExchangeName.setEnabled( !defaultSelected );
+    wExchangeName.setEnabled( !defaultSelected );
+    wExchangeDurable.setEnabled( !defaultSelected );
+    wExchangeExclusive.setEnabled( !defaultSelected );
+    wExchangeAutoDelete.setEnabled( !defaultSelected );
+    wlRoutingKey.setEnabled( !defaultSelected );
+    wRoutingKey.setEnabled( !defaultSelected );
 
-    wlQueueName.setEnabled(defaultSelected);
-    wQueueName.setEnabled(defaultSelected);
-    wQueueDurable.setEnabled(defaultSelected);
-    wQueueExclusive.setEnabled(defaultSelected);
-    wQueueAutoDelete.setEnabled(defaultSelected);
+    wlQueueName.setEnabled( defaultSelected );
+    wQueueName.setEnabled( defaultSelected );
+    wQueueDurable.setEnabled( defaultSelected );
+    wQueueExclusive.setEnabled( defaultSelected );
+    wQueueAutoDelete.setEnabled( defaultSelected );
   }
-
 
 
   protected void getData() {
@@ -462,12 +460,12 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
 
     wExchangeType.setText( nullToEmpty( meta.getExchangeType() ) );
     wExchangeName.setText( nullToEmpty( meta.getExchange() ) );
-    wExchangeDurable.setSelection(meta.isExchangeDurable());
+    wExchangeDurable.setSelection( meta.isExchangeDurable() );
     wExchangeExclusive.setSelection( meta.isExchangeExclusive() );
     wExchangeAutoDelete.setSelection( meta.isExchangeAutoDelete() );
 
     wQueueName.setText( nullToEmpty( meta.getQueue() ) );
-    wQueueDurable.setSelection(meta.isQueueDurable());
+    wQueueDurable.setSelection( meta.isQueueDurable() );
     wQueueExclusive.setSelection( meta.isQueueExclusive() );
     wQueueAutoDelete.setSelection( meta.isQueueAutoDelete() );
 
@@ -480,21 +478,21 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
   private void ok() {
     stepname = wStepname.getText();
 
-    meta.setHostname(wHostname.getText());
+    meta.setHostname( wHostname.getText() );
 
-    meta.setExchangeType(wExchangeType.getText());
-    meta.setExchange(wExchangeName.getText());
-    meta.setExchangeDurable(wExchangeDurable.getSelection());
-    meta.setExchangeExclusive(wExchangeExclusive.getSelection());
-    meta.setExchangeAutoDelete(wExchangeAutoDelete.getSelection());
+    meta.setExchangeType( wExchangeType.getText() );
+    meta.setExchange( wExchangeName.getText() );
+    meta.setExchangeDurable( wExchangeDurable.getSelection() );
+    meta.setExchangeExclusive( wExchangeExclusive.getSelection() );
+    meta.setExchangeAutoDelete( wExchangeAutoDelete.getSelection() );
 
-    meta.setQueue(wQueueName.getText());
-    meta.setQueueDurable(wQueueDurable.getSelection());
-    meta.setQueueExclusive(wQueueExclusive.getSelection());
-    meta.setQueueAutoDelete(wQueueAutoDelete.getSelection());
+    meta.setQueue( wQueueName.getText() );
+    meta.setQueueDurable( wQueueDurable.getSelection() );
+    meta.setQueueExclusive( wQueueExclusive.getSelection() );
+    meta.setQueueAutoDelete( wQueueAutoDelete.getSelection() );
 
-    meta.setRoutingKey(wRoutingKey.getText());
-    meta.setFieldToSend(wMessageField.getText());
+    meta.setRoutingKey( wRoutingKey.getText() );
+    meta.setFieldToSend( wMessageField.getText() );
 
     dispose();
   }
@@ -506,11 +504,11 @@ public class AmqpProducerDialog extends BaseStepDialog implements StepDialogInte
 
   private Image getImage() {
     PluginInterface plugin =
-            PluginRegistry.getInstance().getPlugin( StepPluginType.class, stepMeta.getStepMetaInterface() );
+      PluginRegistry.getInstance().getPlugin( StepPluginType.class, stepMeta.getStepMetaInterface() );
     String id = plugin.getIds()[ 0 ];
     if ( id != null ) {
       return GUIResource.getInstance().getImagesSteps().get( id ).getAsBitmapForSize( shell.getDisplay(),
-              ConstUI.LARGE_ICON_SIZE, ConstUI.LARGE_ICON_SIZE );
+        ConstUI.LARGE_ICON_SIZE, ConstUI.LARGE_ICON_SIZE );
     }
     return null;
   }
