@@ -930,7 +930,7 @@ public class JobHistoryDelegate extends SpoonDelegate implements XulEventHandler
               break;
           }
 
-          ValueMetaInterface valueMeta = new ValueMeta( field.getFieldName(), valueType, field.getLength(), -1 );
+          ValueMetaInterface valueMeta = new ValueMeta( field.getFieldName(), valueType, field.getLength(), -1, field.getTrimType() );
           if ( conversionMask != null ) {
             valueMeta.setConversionMask( conversionMask );
           }
