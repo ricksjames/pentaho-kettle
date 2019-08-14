@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -102,6 +102,10 @@ public class ValueMeta extends ValueMetaBase {
   }
 
   public ValueMeta( String name, int type, int length, int precision ) {
+      this(name, type, length, precision, 0 );
+  }
+
+  public ValueMeta( String name, int type, int length, int precision, int trimType ) {
     this.name = name;
     this.type = type;
     this.length = length;
@@ -118,6 +122,7 @@ public class ValueMeta extends ValueMetaBase {
     this.lenientStringToNumber =
       convertStringToBoolean( Const.NVL( System.getProperty(
         Const.KETTLE_LENIENT_STRING_TO_NUMBER_CONVERSION, "N" ), "N" ) );
+    this.trimType = trimType;
 
     super.determineSingleByteEncoding();
     setDefaultConversionMask();

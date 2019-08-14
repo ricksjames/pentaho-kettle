@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -39,6 +39,7 @@ public class LogTableField implements Cloneable {
   private String description;
   private int dataType;
   private int length;
+  private int trimType;
   private boolean subjectAllowed;
 
   // Field indicators...
@@ -58,30 +59,43 @@ public class LogTableField implements Cloneable {
    * @param enabled
    * @param fieldName
    * @param subject
+   * @param name
    * @param description
    */
   public LogTableField( String id, boolean enabled, String fieldName, Object subject, String name,
     String description ) {
-    this.id = id;
-    this.enabled = enabled;
-    this.fieldName = fieldName;
-    this.subject = subject;
-    this.name = name;
-    this.description = description;
-    this.subjectAllowed = true;
-    this.visible = true;
+    this( id, enabled, true, fieldName, name, description, 0, 0, subject, 0 );
   }
 
   /**
    * @param id
    * @param enabled
+   * @param subjectAllowed
    * @param fieldName
+   * @param name
    * @param description
    * @param dataType
    * @param length
    */
   public LogTableField( String id, boolean enabled, boolean subjectAllowed, String fieldName, String name,
     String description, int dataType, int length ) {
+    this( id, enabled, subjectAllowed, fieldName, name, description, dataType, length, null, 0 );
+  }
+
+  /**
+   * @param id
+   * @param enabled
+   * @param subjectAllowed
+   * @param fieldName
+   * @param name
+   * @param description
+   * @param dataType
+   * @param length
+   * @param subject
+   * @param trimType
+   */
+  public LogTableField( String id, boolean enabled, boolean subjectAllowed, String fieldName, String name,
+                        String description, int dataType, int length, Object subject, int trimType ) {
     this.id = id;
     this.enabled = enabled;
     this.subjectAllowed = subjectAllowed;
@@ -90,22 +104,21 @@ public class LogTableField implements Cloneable {
     this.description = description;
     this.dataType = dataType;
     this.length = length;
+    this.subject = subject;
+    this.trimType = trimType;
+
     this.visible = true;
   }
 
   /**
    * Create a new enabled log table field with the specified field name for the specified subject.
    *
-   * @param fieldname
+   * @param id
+   * @param fieldName
    * @param subject
    */
   public LogTableField( String id, String fieldName, Object subject ) {
-    this.id = id;
-    this.enabled = true;
-    this.fieldName = fieldName;
-    this.subject = subject;
-    this.subjectAllowed = true;
-    this.visible = true;
+    this( id, true, fieldName, subject, null, null );
   }
 
   @Override
@@ -348,5 +361,13 @@ public class LogTableField implements Cloneable {
    */
   public void setNameField( boolean nameField ) {
     this.nameField = nameField;
+  }
+
+  public int getTrimType() {
+    return trimType;
+  }
+
+  public void setTrimType( int trimType ) {
+    this.trimType = trimType;
   }
 }
