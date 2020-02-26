@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 /**
  * Will run the given sub-transformation with the rows passed to execute
@@ -57,6 +58,7 @@ public class SubtransExecutor {
   private String subStep;
   private boolean stopped;
   Set<Trans> running;
+  private Semaphore bufferPermits;
 
   public SubtransExecutor( String subTransName, Trans parentTrans, TransMeta subtransMeta, boolean shareVariables,
                            TransExecutorParameters parameters, String subStep ) {
@@ -68,6 +70,7 @@ public class SubtransExecutor {
     this.subStep = subStep;
     this.statuses = new LinkedHashMap<>();
     this.running = new ConcurrentHashSet<>();
+    this.bufferPermits = new Semaphore( 1 );
   }
 
   public Optional<Result> execute( List<RowMetaAndData> rows ) throws KettleException {
@@ -104,6 +107,7 @@ public class SubtransExecutor {
 
     Result subtransResult = subtrans.getResult();
     subtransResult.setRows( rowMetaAndData  );
+    releaseBufferPermit();
     return Optional.of( subtransResult );
   }
 
@@ -188,5 +192,13 @@ public class SubtransExecutor {
 
   public Trans getParentTrans() {
     return parentTrans;
+  }
+
+  private void releaseBufferPermit( ) {
+    this.bufferPermits.release();
+  }
+
+  public void acquireBufferPermit() throws InterruptedException {
+    this.bufferPermits.acquire();
   }
 }

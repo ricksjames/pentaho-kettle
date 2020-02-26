@@ -25,8 +25,7 @@ package org.pentaho.di.trans.streaming.common;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.reactivex.Flowable;
-import io.reactivex.processors.FlowableProcessor;
-import io.reactivex.processors.ReplayProcessor;
+import io.reactivex.processors.PublishProcessor;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.streaming.api.StreamSource;
@@ -55,7 +54,8 @@ public abstract class BlockingQueueStreamSource<T> implements StreamSource<T> {
 
   private final AtomicBoolean paused = new AtomicBoolean( false );
 
-  private final FlowableProcessor<T> publishProcessor = ReplayProcessor.createWithSize( 1000 );
+  private final PublishProcessor<T> publishProcessor = PublishProcessor.create();
+
   protected final BaseStreamStep streamStep;
 
   // binary semaphore used to block acceptance of rows when paused
@@ -111,8 +111,23 @@ public abstract class BlockingQueueStreamSource<T> implements StreamSource<T> {
     try {
       acceptingRowsSemaphore.acquire();
       rows.forEach( ( row ) -> {
+        while (!publishProcessor.hasSubscribers()) {
+          try {
+            Thread.sleep(1000);
+            logChannel.logBasic("Waiting for subscribers");
+          } catch ( InterruptedException e ) {
+            logChannel.logError( e.getMessage() );
+          }
+        }
+
+        while ( !publishProcessor.offer( row ) ) {
+          try {
+            this.streamStep.subtransExecutor.acquireBufferPermit();
+          } catch ( InterruptedException e ) {
+            logChannel.logError( e.getMessage() );
+          }
+        }
         streamStep.incrementLinesInput();
-        publishProcessor.onNext( row );
       } );
     } catch ( InterruptedException e ) {
       logChannel.logError(

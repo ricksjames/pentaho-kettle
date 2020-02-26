@@ -99,7 +99,7 @@ public class FixedTimeStreamWindow<I extends List> implements StreamWindow<I, Re
       : flowable.buffer( millis, MILLISECONDS )
       : flowable.buffer( batchSize );
     return buffer
-      .parallel( parallelism )
+      .parallel( parallelism, 10000 )
       .runOn( sharedStreamingBatchPoolSize > 0 ? Schedulers.from( sharedStreamingBatchPool ) : Schedulers.io() )
       .filter( list -> !list.isEmpty() )
       .map( this::sendBufferToSubtrans )
