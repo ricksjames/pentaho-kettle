@@ -112,6 +112,11 @@ public abstract class BlockingQueueStreamSource<T> implements StreamSource<T> {
       acceptingRowsSemaphore.acquire();
       rows.forEach( ( row ) -> {
         streamStep.incrementLinesInput();
+        try {
+          this.streamStep.subtransExecutor.acquireBufferPermit();
+        } catch ( InterruptedException e ) {
+          logChannel.logError( e.getMessage() );
+        }
         publishProcessor.onNext( row );
       } );
     } catch ( InterruptedException e ) {

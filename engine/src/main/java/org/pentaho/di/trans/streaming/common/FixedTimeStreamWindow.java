@@ -61,6 +61,7 @@ public class FixedTimeStreamWindow<I extends List> implements StreamWindow<I, Re
   private final Consumer<Map.Entry<List<I>, Result>> postProcessor;
   private int sharedStreamingBatchPoolSize = 0;
   private static ThreadPoolExecutor sharedStreamingBatchPool;
+  private final int rxBatchCount;
 
   public FixedTimeStreamWindow( SubtransExecutor subtransExecutor, RowMetaInterface rowMeta, long millis,
                                 int batchSize, int parallelism ) {
@@ -75,6 +76,15 @@ public class FixedTimeStreamWindow<I extends List> implements StreamWindow<I, Re
     this.batchSize = batchSize;
     this.parallelism = parallelism;
     this.postProcessor = postProcessor;
+
+    //TODO: need to add meta validation: batchSize must be less than MAX_MESSAGE_BUFFER_COUNT or the subtrans won't run (when no millis are provided)
+    //TODO: not sure this gives much benefit for batchSize only runs, just setting rxBatchCount to MAX_MESSAGE_BUFFER_COUNT should be sufficient
+    //When only batchSize is provided and it is greater than 0 and less than the MAX_MESSAGE_BUFFER_COUNT we can exactly
+    //calculate how many batches rx will have to handle. When a time value is provided the batch size split by RxJava
+    //isn't guaranteed to be equal batchSize, hence it could be smaller and require more batches. We need to be able to
+    //handle the full MAX_MESSAGE_BUFFER_COUNT for different possible configurations and stream speeds
+    this.rxBatchCount = ( millis == 0 && batchSize > 0 && batchSize < subtransExecutor.MAX_MESSAGE_BUFFER_COUNT ) ?
+      subtransExecutor.MAX_MESSAGE_BUFFER_COUNT / batchSize : this.subtransExecutor.MAX_MESSAGE_BUFFER_COUNT;
 
     try {
       sharedStreamingBatchPoolSize = Integer.parseInt( System.getProperties().getProperty( Const.SHARED_STREAMING_BATCH_POOL_SIZE, "0" ) );
@@ -99,8 +109,9 @@ public class FixedTimeStreamWindow<I extends List> implements StreamWindow<I, Re
       : flowable.buffer( millis, MILLISECONDS )
       : flowable.buffer( batchSize );
     return buffer
-      .parallel( parallelism )
-      .runOn( sharedStreamingBatchPoolSize > 0 ? Schedulers.from( sharedStreamingBatchPool ) : Schedulers.io() )
+      .parallel( parallelism, rxBatchCount )
+      .runOn( sharedStreamingBatchPoolSize > 0 ? Schedulers.from( sharedStreamingBatchPool ) : Schedulers.io(),
+        rxBatchCount )
       .filter( list -> !list.isEmpty() )
       .map( this::sendBufferToSubtrans )
       .filter( Optional::isPresent )
