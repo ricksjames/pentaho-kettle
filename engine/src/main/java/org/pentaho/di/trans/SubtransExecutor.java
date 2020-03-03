@@ -42,12 +42,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Will run the given sub-transformation with the rows passed to execute
  */
 public class SubtransExecutor {
   private static final Class<?> PKG = SubtransExecutor.class;
+  //TODO: buffer count could be configurable
+  public static final int MAX_MESSAGE_BUFFER_COUNT = 100000;
+
   private final Map<String, StepStatus> statuses;
   private final String subTransName;
   private Trans parentTrans;
@@ -57,6 +62,8 @@ public class SubtransExecutor {
   private String subStep;
   private boolean stopped;
   Set<Trans> running;
+  private Semaphore bufferPermit = new Semaphore(0);
+  private AtomicInteger bufferPermitCount;
 
   public SubtransExecutor( String subTransName, Trans parentTrans, TransMeta subtransMeta, boolean shareVariables,
                            TransExecutorParameters parameters, String subStep ) {
@@ -68,6 +75,7 @@ public class SubtransExecutor {
     this.subStep = subStep;
     this.statuses = new LinkedHashMap<>();
     this.running = new ConcurrentHashSet<>();
+    this.bufferPermitCount = new AtomicInteger( MAX_MESSAGE_BUFFER_COUNT );
   }
 
   public Optional<Result> execute( List<RowMetaAndData> rows ) throws KettleException {
@@ -104,6 +112,7 @@ public class SubtransExecutor {
 
     Result subtransResult = subtrans.getResult();
     subtransResult.setRows( rowMetaAndData  );
+    releaseBufferPermits( rows.size() );
     return Optional.of( subtransResult );
   }
 
@@ -188,5 +197,20 @@ public class SubtransExecutor {
 
   public Trans getParentTrans() {
     return parentTrans;
+  }
+
+  private void releaseBufferPermits( int count ) {
+    //release the semaphore if the count is more than 0 and the permit count was zero before the add
+    if ( count > 0 ) {
+      if ( bufferPermitCount.getAndAdd( count ) == 0 ) {
+        this.bufferPermit.release();
+      }
+    }
+  }
+
+  public void acquireBufferPermit() throws InterruptedException {
+    if ( bufferPermitCount.decrementAndGet() == 0 ) {
+      this.bufferPermit.acquire();
+    }
   }
 }
