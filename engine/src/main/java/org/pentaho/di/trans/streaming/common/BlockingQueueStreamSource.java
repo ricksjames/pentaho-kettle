@@ -26,14 +26,17 @@ package org.pentaho.di.trans.streaming.common;
 import com.google.common.annotations.VisibleForTesting;
 import io.reactivex.Flowable;
 import io.reactivex.processors.FlowableProcessor;
+import io.reactivex.processors.PublishProcessor;
 import io.reactivex.processors.ReplayProcessor;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.streaming.api.StreamSource;
+import org.reactivestreams.Subscription;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -50,12 +53,16 @@ import static org.pentaho.di.i18n.BaseMessages.getString;
  */
 public abstract class BlockingQueueStreamSource<T> implements StreamSource<T> {
 
+
   private static final Class<?> PKG = BlockingQueueStreamSource.class;
 
 
   private final AtomicBoolean paused = new AtomicBoolean( false );
 
-  private final FlowableProcessor<T> publishProcessor = ReplayProcessor.createWithSize( 1000 );
+  private final PublishProcessor<T> publishProcessor = PublishProcessor.create();
+
+  private LinkedBlockingDeque<T> blockingDeque;
+
   protected final BaseStreamStep streamStep;
 
   // binary semaphore used to block acceptance of rows when paused
@@ -64,6 +71,39 @@ public abstract class BlockingQueueStreamSource<T> implements StreamSource<T> {
 
   protected BlockingQueueStreamSource( BaseStreamStep streamStep ) {
     this.streamStep = streamStep;
+    //TODO: this value doesn't have to be one, but 1 seems to work just fine, since rX has buffers also
+    this.blockingDeque = new LinkedBlockingDeque<>( 1 );
+
+    publishProcessor.onSubscribe( new Subscription() {
+      @Override public void request( long l ) {
+        Thread thread = new Thread( () -> processMessages() );
+        thread.start();
+      }
+
+      @Override public void cancel() {
+      }
+    } );
+  }
+
+  private void processMessages() {
+    try {
+      T take = blockingDeque.take();
+
+      //TODO: note that even though this gets called from the onSubscribe, the subscribers aren't registered yet
+      //TODO: On my laptop this usually only takes about 60 milliseconds to be ready, but messages can still be lost
+      //TODO: since we can't get around this sleep anyway, its probably simpler to not implement onSubscribe
+      //TODO: and just put the sleep in the acceptRows method, removing the need for the deque and the extra thread also
+      while ( !publishProcessor.hasSubscribers() ) {
+        logChannel.logBasic( "Waiting for subscribers" );
+        Thread.sleep( 10 );
+      }
+      while ( publishProcessor.hasSubscribers() && !publishProcessor.hasComplete() ) {
+        publishProcessor.onNext( take );
+        take = blockingDeque.take();
+      }
+    } catch ( InterruptedException e ) {
+      logChannel.logError( e.getMessage() );
+    }
   }
 
 
@@ -111,8 +151,13 @@ public abstract class BlockingQueueStreamSource<T> implements StreamSource<T> {
     try {
       acceptingRowsSemaphore.acquire();
       rows.forEach( ( row ) -> {
+        try {
+          this.streamStep.subtransExecutor.acquireBufferPermit();
+          blockingDeque.put( row );
+        } catch ( InterruptedException e ) {
+          logChannel.logError( e.getMessage() );
+        }
         streamStep.incrementLinesInput();
-        publishProcessor.onNext( row );
       } );
     } catch ( InterruptedException e ) {
       logChannel.logError(
