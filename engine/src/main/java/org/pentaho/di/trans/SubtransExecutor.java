@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -35,6 +35,7 @@ import org.pentaho.di.trans.step.StepMetaDataCombi;
 import org.pentaho.di.trans.step.StepStatus;
 import org.pentaho.di.trans.steps.TransStepUtil;
 import org.pentaho.di.trans.steps.transexecutor.TransExecutorParameters;
+import org.pentaho.di.trans.streaming.common.AtomicCountSemaphore;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -57,9 +58,11 @@ public class SubtransExecutor {
   private String subStep;
   private boolean stopped;
   Set<Trans> running;
+  private AtomicCountSemaphore atomicCountSemaphore;
+  private final int prefetchCount;
 
   public SubtransExecutor( String subTransName, Trans parentTrans, TransMeta subtransMeta, boolean shareVariables,
-                           TransExecutorParameters parameters, String subStep ) {
+                           TransExecutorParameters parameters, String subStep, int prefetchCount ) {
     this.subTransName = subTransName;
     this.parentTrans = parentTrans;
     this.subtransMeta = subtransMeta;
@@ -68,6 +71,8 @@ public class SubtransExecutor {
     this.subStep = subStep;
     this.statuses = new LinkedHashMap<>();
     this.running = new ConcurrentHashSet<>();
+    this.prefetchCount = prefetchCount;
+    this.atomicCountSemaphore = new AtomicCountSemaphore( prefetchCount );
   }
 
   public Optional<Result> execute( List<RowMetaAndData> rows ) throws KettleException {
@@ -104,6 +109,7 @@ public class SubtransExecutor {
 
     Result subtransResult = subtrans.getResult();
     subtransResult.setRows( rowMetaAndData  );
+    releaseBufferPermits( rows.size() );
     return Optional.of( subtransResult );
   }
 
@@ -188,5 +194,17 @@ public class SubtransExecutor {
 
   public Trans getParentTrans() {
     return parentTrans;
+  }
+
+  private void releaseBufferPermits( int count ) {
+    atomicCountSemaphore.release( count );
+  }
+
+  public void acquireBufferPermit() throws InterruptedException {
+    atomicCountSemaphore.acquire();
+  }
+
+  public int getPrefetchCount() {
+    return prefetchCount;
   }
 }
